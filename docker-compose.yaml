@@ -1,0 +1,50 @@
+version: '3.8'
+
+x-redis-cred: &redis-cred
+  REDIS_HOST: ${REDIS_HOST}
+  REDIS_PORT: ${REDIS_PORT}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+x-app-cred: &app-cred
+  PROJECT_NAME: WILDBERRIES_ADAPTER
+  X_USER_ID: ${X_USER_ID}
+  X_SUPPLIER_ID: ${X_SUPPLIER_ID}
+  X_SUPPLIER_ID_EXTERNAl: ${X_SUPPLIER_ID_EXTERNAl}
+  WB_TOKEN: ${WB_TOKEN}
+  <<: *redis-cred
+
+services:
+
+  redis:
+    image: redis:7.0
+    environment: *redis-cred
+    volumes:
+      - redis_volume:/data
+    restart: on-failure
+    healthcheck:
+      test: [ 'CMD', 'redis-cli' ]
+      interval: 3s
+      timeout: 5s
+      retries: 3
+
+  app:
+    build: ./app
+    environment: *app-cred
+    restart: on-failure
+    ports:
+      - "8080:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: ./app
+    environment: *app-cred
+    command: arq core.arq.WorkerSettings
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis_volume:
