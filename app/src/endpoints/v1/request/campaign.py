@@ -6,28 +6,30 @@ from fastapi import APIRouter, Depends, status
 
 from depends.arq import get_arq
 from dto.campaign import CreateCampaignDTO
-from schemas.v1.base import RequestQueuedResponse
+from schemas.v1.base import RequestQueuedResponse, JobResult
 from schemas.v1.campaign import CreateCampaignResponse
 
 router = APIRouter(prefix='/campaigns', tags=['campaigns'])
 
 
 @router.post(
-    path='',
+    path='/full',
     responses={
-        status.HTTP_202_ACCEPTED: {'model': RequestQueuedResponse},
-        status.HTTP_201_CREATED: {'model': CreateCampaignResponse}
+        status.HTTP_202_ACCEPTED:
+            {'model': RequestQueuedResponse},
+        status.HTTP_201_CREATED:
+            {'model': JobResult[CreateCampaignResponse]}
     },
     description='Create campaign',
 )
-async def create_campaign(
+async def create_full_campaign(
         campaign: CreateCampaignDTO,
         arq: ArqRedis = Depends(get_arq),
 ):
     job_id = uuid.uuid4()
 
     await arq.enqueue_job(
-        'create_campaign',
+        'create_full_campaign',
         job_id,
         campaign,
     )

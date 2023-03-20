@@ -84,16 +84,18 @@ class BaseAdapter:
         )
 
 
-def retry_ahttpx(retries: int = 5):
+def retry_ahttpx(codes: tuple[str, ...],
+                 retries: int = 5):
     def func_wrapper(func):
         @wraps(func)
         async def inner(*args, **kwargs):
             for _ in range(retries):
                 result: httpx.Response = await func(*args, **kwargs)
-                if result.status_code == 429:
+                if any([code in str(result.status_code) for code in codes]):
+                    await asyncio.sleep(2)
                     continue
-                await asyncio.sleep(2)
                 return result
+            result.raise_for_status()
 
         return inner
 

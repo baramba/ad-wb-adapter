@@ -1,62 +1,33 @@
-import httpx
-
-from adapters.base import BaseAdapter, retry_ahttpx
+import asyncio
 import collections
+import contextlib
+
+import httpx
+from httpx import HTTPStatusError
+
+from adapters.base import BaseAdapter
+from exceptions.campaign import CampaignCreateError, CampaignInitError, CampaignStartError
 
 
 class CampaignAdapter(BaseAdapter):
-
-    @retry_ahttpx()
-    async def post(
-            self,
-            url: str,
-            headers: dict = None,
-            cookies: dict = None,
-            body: dict = None,
-    ) -> httpx.Response:
-        return await self._post(
-            url=url,
-            headers=headers,
-            cookies=cookies,
-            body=body,
-        )
-
-    @retry_ahttpx()
-    async def put(
-            self,
-            url: str,
-            headers: dict = None,
-            cookies: dict = None,
-            body: dict = None,
-    ) -> httpx.Response:
-        return await self._put(
-            url=url,
-            headers=headers,
-            cookies=cookies,
-            body=body,
-        )
-
-    @retry_ahttpx()
-    async def get(
-            self,
-            url: str,
-            headers: dict = None,
-            cookies: dict = None,
-            query: dict = None,
-    ) -> httpx.Response:
-        return await self._get(
-            url=url,
-            headers=headers,
-            cookies=cookies,
-            query=query,
-        )
 
     async def get_subject_id(
             self,
             nms: int
     ) -> int:
         url = f'https://card.wb.ru/cards/detail?nm={nms}'
-        result = await self.get(url=url)
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._get(url=url)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignCreateError(result.status_code,
+                                      "Ошибка при получении subject id")
         return result.json()['data']['products'][0]['subjectId']
 
     async def get_keyword(
@@ -66,7 +37,19 @@ class CampaignAdapter(BaseAdapter):
         subject_id = await self.get_subject_id(nms=nms)
 
         url = 'https://cmp.wildberries.ru/backend/api/v2/search/supplier-subjects'
-        result = await self.get(url=url)
+
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._get(url=url)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignCreateError(result.status_code,
+                                      "Ошибка при получении subject keyword")
         for item in result.json():
             if item['id'] == subject_id:
                 return item['name']
@@ -89,7 +72,22 @@ class CampaignAdapter(BaseAdapter):
                     for k, v in kw_nms.items()
                 ]
                 }
-        result = await self.post(url=url, body=body)
+        headers = {
+            'Referer': 'https://cmp.wildberries.ru/campaigns/create/search'
+        }
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._post(url=url, body=body, headers=headers)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignCreateError(result.status_code,
+                                      "Ошибка при создании компании")
+
         return result.json()['id']
 
     async def get_campaign_budget(
@@ -98,7 +96,19 @@ class CampaignAdapter(BaseAdapter):
     ) -> dict:
         url = f'https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement'
         headers = {'Referer': f'https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}'}
-        result = await self.get(url=url, headers=headers)
+
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._get(url=url, headers=headers)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignInitError(result.status_code,
+                                    f"Ошибка при получении бюджета компании")
         return result.json()
 
     async def add_keywords_to_campaign(
@@ -108,7 +118,18 @@ class CampaignAdapter(BaseAdapter):
     ):
         url = f'https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus'
         body = {'pluse': keywords}
-        await self.post(url=url, body=body)
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._post(url=url, body=body)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignStartError(result.status_code,
+                                     "Ошибка при добавлении ключевых слов")
 
     async def add_amount_to_campaign_budget(
             self,
@@ -116,17 +137,60 @@ class CampaignAdapter(BaseAdapter):
             amount: int,
     ):
         url = f'https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget/deposit'
-        body = {'sum': amount, 'type': 1}
-        await self.post(url=url, body=body)
+        headers = {'Referer': f'https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}'}
+        body = {'sum': amount, 'type': 0}
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._post(url=url, body=body, headers=headers)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignInitError(result.status_code,
+                                    "Ошибка при добавлении бюджета компании")
 
     async def set_campaign_bet(
             self,
             id: int,
             bet: int,
-    ):
+    ) -> dict:
         budget = await self.get_campaign_budget(id=id)
         url = f'https://cmp.wildberries.ru/backend/api/v2/search/{id}/save'
-        for i in range(len(budget['place'])):
-            budget['place'][i]['price'] = bet
+        bugdet_len = len(budget['place'])
+        budget['budget']['total'] = bet
+        for i in range(bugdet_len):
+            budget['place'][i]['price'] = bet // bugdet_len
 
-        await self.put(url=url, body=budget)
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._put(url=url, body=budget)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignInitError(result.status_code,
+                                    "Ошибка при установке ставки")
+        return budget
+
+    async def start_campaign(self, id: int, budget: dict):
+        url = f'https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement'
+
+        headers = {'Referer': f'https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}'}
+        for _ in range(5):
+            with contextlib.suppress(HTTPStatusError):
+                result = await self._put(url=url, body=budget, headers=headers)
+                result.raise_for_status()
+                break
+            await asyncio.sleep(1)
+
+        try:
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignStartError(result.status_code,
+                                     "Ошибка при запуске компании")

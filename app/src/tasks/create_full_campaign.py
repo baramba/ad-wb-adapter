@@ -1,0 +1,87 @@
+import asyncio
+import uuid
+
+from arq import Retry
+from httpx import HTTPError
+from redis.asyncio import Redis
+
+from adapters.campaign import CampaignAdapter
+from depends.adapters.campaign import get_campaign_adapter
+from depends.db.redis import get_redis
+from dto.campaign import CreateCampaignDTO
+from exceptions.campaign import CampaignError, CampaignCreateError
+from schemas.v1.base import JobResult
+from schemas.v1.campaign import CreateCampaignResponse
+from utils import depends_decorator
+
+
+@depends_decorator(
+    campaign_adapter=get_campaign_adapter,
+    redis=get_redis,
+)
+async def create_full_campaign(
+        ctx,
+        job_id_: uuid.UUID,
+        campaign: CreateCampaignDTO,
+        campaign_adapter: CampaignAdapter = None,
+        redis: Redis = None,
+):
+    campaign_id = None
+    try:
+        campaign_id = await campaign_adapter.create_campaign(
+            name=campaign.name,
+            nms=campaign.nms,
+        )
+        await campaign_adapter.add_amount_to_campaign_budget(
+            id=campaign_id,
+            amount=campaign.budget)
+        budget = await campaign_adapter.set_campaign_bet(
+            id=campaign_id,
+            bet=campaign.budget)
+        print(budget, flush=True)
+        await campaign_adapter.add_keywords_to_campaign(
+            id=campaign_id,
+            keywords=campaign.keywords
+        )
+        await asyncio.sleep(3)
+        await campaign_adapter.start_campaign(
+            id=campaign_id,
+            budget=budget
+        )
+    except (CampaignError, HTTPError) as e:
+        print(e, flush=True)
+        if campaign_id is None:
+            value = JobResult(
+                code=e.__class__.__name__,
+                status_code=e.status_code,
+                text=str(e),
+                response={}
+            ).json()
+            if isinstance(e, HTTPError):
+                raise Retry(defer=30)
+        else:
+            value = JobResult(
+                code=e.__class__.__name__,
+                status_code=getattr(e, 'status_code', 999),
+                text=str(e),
+                response=CreateCampaignResponse(id=campaign_id)
+            ).json()
+
+
+        await redis.set(
+            name=str(job_id_),
+            value=value,
+            ex=1800,
+        )
+
+        return
+
+    await redis.set(
+        name=str(job_id_),
+        value=JobResult(
+            code='CampaignStartSuccess',
+            status_code=201,
+            response=CreateCampaignResponse(id=campaign_id)
+        ).json(),
+        ex=1800
+    )

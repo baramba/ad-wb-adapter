@@ -11,7 +11,7 @@ router = APIRouter(prefix='/jobs', tags=['jobs'])
 @router.get(
     path='/{job_id}',
     responses={
-        status.HTTP_200_OK: {'model': JobResult},
+        status.HTTP_200_OK: {'model': JobResult[dict]},
     },
     description='Get job result by id',
 )
