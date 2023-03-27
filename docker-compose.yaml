@@ -5,6 +5,15 @@ x-redis-cred: &redis-cred
   REDIS_PORT: ${REDIS_PORT}
   REDIS_PASSWORD: ${REDIS_PASSWORD}
 
+x-rabbitmq-cred: &rabbitmq-cred
+  RABBITMQ_HOST: ${RABBITMQ_HOST}
+  RABBITMQ_PORT: ${RABBITMQ_PORT}
+  RABBITMQ_LOGIN: ${RABBITMQ_LOGIN}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+  RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
+  RABBITMQ_DEFAULT_USER: ${RABBITMQ_LOGIN}
+  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+
 x-app-cred: &app-cred
   PROJECT_NAME: WILDBERRIES_ADAPTER
   X_USER_ID: ${X_USER_ID}
@@ -12,6 +21,7 @@ x-app-cred: &app-cred
   X_SUPPLIER_ID_EXTERNAl: ${X_SUPPLIER_ID_EXTERNAl}
   WB_TOKEN: ${WB_TOKEN}
   <<: *redis-cred
+  <<: *rabbitmq-cred
 
 services:
 
@@ -27,6 +37,21 @@ services:
       timeout: 5s
       retries: 3
 
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    environment: *rabbitmq-cred
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_volume:/var/lib/rabbitmq/
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      interval: 3s
+      timeout: 5s
+      retries: 3
+
+
   app:
     build: ./app
     environment: *app-cred
@@ -35,6 +60,8 @@ services:
       - "8080:8000"
     depends_on:
       redis:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
 
   worker:
@@ -45,6 +72,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
 volumes:
   redis_volume:
+  rabbitmq_volume:

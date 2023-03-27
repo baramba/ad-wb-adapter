@@ -8,23 +8,28 @@ from redis.asyncio import Redis
 from adapters.campaign import CampaignAdapter
 from depends.adapters.campaign import get_campaign_adapter
 from depends.db.redis import get_redis
+from depends.services.queue import get_queue_service
 from dto.campaign import CreateCampaignDTO
-from exceptions.campaign import CampaignError, CampaignCreateError
+from exceptions.campaign import CampaignError
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
+from services.queue import BaseQueue
 from utils import depends_decorator
 
 
 @depends_decorator(
     campaign_adapter=get_campaign_adapter,
     redis=get_redis,
+    queue_service=get_queue_service
 )
 async def create_full_campaign(
         ctx,
         job_id_: uuid.UUID,
         campaign: CreateCampaignDTO,
+        routing_key: str,
         campaign_adapter: CampaignAdapter = None,
         redis: Redis = None,
+        queue_service: BaseQueue = None,
 ):
     campaign_id = None
     try:
@@ -38,7 +43,6 @@ async def create_full_campaign(
         budget = await campaign_adapter.set_campaign_bet(
             id=campaign_id,
             bet=campaign.budget)
-        print(budget, flush=True)
         await campaign_adapter.add_keywords_to_campaign(
             id=campaign_id,
             keywords=campaign.keywords
@@ -49,7 +53,6 @@ async def create_full_campaign(
             budget=budget
         )
     except (CampaignError, HTTPError) as e:
-        print(e, flush=True)
         if campaign_id is None:
             value = JobResult(
                 code=e.__class__.__name__,
@@ -67,12 +70,14 @@ async def create_full_campaign(
                 response=CreateCampaignResponse(id=campaign_id)
             ).json()
 
-
         await redis.set(
             name=str(job_id_),
             value=value,
             ex=1800,
         )
+        await queue_service.publish(queue_name=routing_key,
+                                    message='Done',
+                                    priority=1)
 
         return
 
@@ -85,3 +90,6 @@ async def create_full_campaign(
         ).json(),
         ex=1800
     )
+    await queue_service.publish(queue_name=routing_key,
+                                message='Done',
+                                priority=1)
