@@ -5,3 +5,4 @@ arq==0.25.0
 gunicorn==20.1.0
 uvicorn==0.21.0
 uvloop==0.17.0
+aio-pika==9.0.5
