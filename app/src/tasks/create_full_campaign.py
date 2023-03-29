@@ -6,6 +6,7 @@ from httpx import HTTPError
 from redis.asyncio import Redis
 
 from adapters.campaign import CampaignAdapter
+from core.settings import settings
 from depends.adapters.campaign import get_campaign_adapter
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
@@ -34,7 +35,7 @@ async def create_full_campaign(
 ):
     campaign_id = None
     rabbitmq_message = RabbitJobResult(job_id=job_id_).json()
-    routing_key = f"{routing_key}:task_complete"
+    routing_key = f"{settings.RABBITMQ.SENDER_KEY}.task_complete.{routing_key}"
     try:
         campaign_id = await campaign_adapter.create_campaign(
             name=campaign.name,

@@ -47,8 +47,6 @@ class BaseRabbitQueue(AbstractQueue):
             priority=priority
         )
 
-        await self.create_queue(queue_name=queue_name)
-
         await self.exchange.publish(
             message=message,
             routing_key=queue_name,

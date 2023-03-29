@@ -25,6 +25,7 @@ class RabbitMQ(BaseSettings):
     LOGIN: str
     PASSWORD: str
     EXCHANGE: str
+    SENDER_KEY: str
 
     class Config:
         env_prefix = 'RABBITMQ_'
