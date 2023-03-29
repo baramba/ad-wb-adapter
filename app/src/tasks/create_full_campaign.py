@@ -10,6 +10,7 @@ from depends.adapters.campaign import get_campaign_adapter
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
 from dto.campaign import CreateCampaignDTO
+from dto.job_result import RabbitJobResult
 from exceptions.campaign import CampaignError
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
@@ -32,6 +33,8 @@ async def create_full_campaign(
         queue_service: BaseQueue = None,
 ):
     campaign_id = None
+    rabbitmq_message = RabbitJobResult(job_id=job_id_).json()
+    routing_key = f"{routing_key}:task_complete"
     try:
         campaign_id = await campaign_adapter.create_campaign(
             name=campaign.name,
@@ -74,7 +77,7 @@ async def create_full_campaign(
             ex=1800,
         )
         await queue_service.publish(queue_name=routing_key,
-                                    message='Done',
+                                    message=rabbitmq_message,
                                     priority=1)
 
         if campaign_id is None:
@@ -92,5 +95,5 @@ async def create_full_campaign(
         ex=1800
     )
     await queue_service.publish(queue_name=routing_key,
-                                message='Done',
+                                message=rabbitmq_message,
                                 priority=1)
