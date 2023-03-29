@@ -53,16 +53,13 @@ async def create_full_campaign(
             budget=budget
         )
     except Exception as e:
-        if campaign_id is None and \
-                isinstance(e, CampaignError):
+        if campaign_id is None:
             value = JobResult(
                 code=e.__class__.__name__,
-                status_code=e.status_code,
+                status_code=getattr(e, 'status_code', 999),
                 text=str(e),
                 response={}
             ).json()
-            if isinstance(e, HTTPError):
-                raise Retry(defer=30)
         else:
             value = JobResult(
                 code=e.__class__.__name__,
@@ -79,6 +76,9 @@ async def create_full_campaign(
         await queue_service.publish(queue_name=routing_key,
                                     message='Done',
                                     priority=1)
+
+        if campaign_id is None:
+            raise Retry(defer=30)
 
         return
 
