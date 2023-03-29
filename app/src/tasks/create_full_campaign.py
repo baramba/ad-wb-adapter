@@ -52,8 +52,9 @@ async def create_full_campaign(
             id=campaign_id,
             budget=budget
         )
-    except (CampaignError, HTTPError) as e:
-        if campaign_id is None:
+    except Exception as e:
+        if campaign_id is None and \
+                isinstance(e, CampaignError):
             value = JobResult(
                 code=e.__class__.__name__,
                 status_code=e.status_code,
