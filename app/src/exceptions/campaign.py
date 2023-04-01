@@ -1,9 +1,11 @@
 class CampaignError(Exception):
-    pass
+    status_code: int
 
-    def __init__(self, status_code: int, *args, **kwargs):
-        super().__init__(*args, *kwargs)
-        self.status_code = status_code
+    @classmethod
+    def init(cls, status_code: int, message: str):
+        result = cls(message)
+        result.status_code = status_code
+        return result
 
 
 class CampaignCreateError(CampaignError):

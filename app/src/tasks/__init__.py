@@ -1,3 +1,7 @@
-from tasks.create_full_campaign import create_full_campaign
+import tasks.create_full_campaign as cfm
 
-tasks = [create_full_campaign]
+tasks = [
+    cfm.create_full_campaign,
+    *cfm.private_tasks,
+
+]

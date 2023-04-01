@@ -2,7 +2,6 @@ import asyncio
 import collections
 import contextlib
 
-import httpx
 from httpx import HTTPStatusError
 
 from adapters.base import BaseAdapter
@@ -26,8 +25,10 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignCreateError(result.status_code,
-                                      "Ошибка при получении subject id")
+            raise CampaignCreateError.init(
+                result.status_code,
+                "Ошибка при получении subject id"
+            )
         return result.json()['data']['products'][0]['subjectId']
 
     async def get_keyword(
@@ -48,8 +49,10 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignCreateError(result.status_code,
-                                      "Ошибка при получении subject keyword")
+            raise CampaignCreateError.init(
+                result.status_code,
+                "Ошибка при получении subject keyword"
+            )
         for item in result.json():
             if item['id'] == subject_id:
                 return item['name']
@@ -85,8 +88,10 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignCreateError(result.status_code,
-                                      "Ошибка при создании компании")
+            raise CampaignCreateError.init(
+                result.status_code,
+                "Ошибка при создании компании"
+            )
 
         return result.json()['id']
 
@@ -107,8 +112,10 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignInitError(result.status_code,
-                                    f"Ошибка при получении бюджета компании")
+            raise CampaignInitError.init(
+                result.status_code,
+                f"Ошибка при получении бюджета компании"
+            )
         return result.json()
 
     async def add_keywords_to_campaign(
@@ -116,7 +123,7 @@ class CampaignAdapter(BaseAdapter):
             id: int,
             keywords: list,
     ):
-        url = f'https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus'
+        url = f'https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus?fixed=true'
         body = {'pluse': keywords}
         for _ in range(5):
             with contextlib.suppress(HTTPStatusError):
@@ -128,8 +135,10 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignStartError(result.status_code,
-                                     "Ошибка при добавлении ключевых слов")
+            raise CampaignStartError.init(
+                result.status_code,
+                "Ошибка при добавлении ключевых слов"
+            )
 
     async def add_amount_to_campaign_budget(
             self,
@@ -149,8 +158,10 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignInitError(result.status_code,
-                                    "Ошибка при добавлении бюджета компании")
+            raise CampaignInitError.init(
+                result.status_code,
+                "Ошибка при добавлении бюджета компании"
+            )
 
     async def set_campaign_bet(
             self,
@@ -174,8 +185,10 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignInitError(result.status_code,
-                                    "Ошибка при установке ставки")
+            raise CampaignInitError.init(
+                result.status_code,
+                "Ошибка при установке ставки"
+            )
         return budget
 
     async def start_campaign(self, id: int, budget: dict):
@@ -192,5 +205,7 @@ class CampaignAdapter(BaseAdapter):
         try:
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignStartError(result.status_code,
-                                     "Ошибка при запуске компании")
+            raise CampaignStartError.init(
+                result.status_code,
+                "Ошибка при запуске компании"
+            )
