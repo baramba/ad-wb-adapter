@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "ad-wb-adapter"
+version = "0.1.0"
+description = ""
+authors = ["Maxim Babikhin <9652485@gmail.com>"]
+readme = "README.md"
+packages = [{include = "wb_adapter"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+httpx = "0.23.3"
+fake-useragent = "1.1.1"
+fastapi = "0.94.0"
+arq = "0.25.0"
+gunicorn = "20.1.0"
+uvicorn = "0.21.0"
+uvloop = "0.17.0"
+aio-pika = "9.0.5"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -7,13 +7,13 @@ from arq import ArqRedis, Retry
 
 
 def depends_decorator(
-        **decorator_kwargs: Union[
-            Callable[[], Awaitable[Any]],
-            Callable[[], Any],
-            tuple[Awaitable[Any], Iterable, dict],
-            tuple[Callable[[Any], Any], Iterable, dict],
-
-        ]):
+    **decorator_kwargs: Union[
+        Callable[[], Awaitable[Any]],
+        Callable[[], Any],
+        tuple[Awaitable[Any], Iterable, dict],
+        tuple[Callable[[Any], Any], Iterable, dict],
+    ]
+):
     def func_wrapper(func):
         @wraps(func)
         async def inner(*args, **kwargs):
@@ -35,16 +35,13 @@ def depends_decorator(
 
 
 async def run_kinda_async_task(arq_poll: ArqRedis, *args, **kwargs) -> Any:
-    job = await arq_poll.enqueue_job(
-        *args,
-        **kwargs
-    )
+    job = await arq_poll.enqueue_job(*args, **kwargs)
     return await job.result()
 
 
 def retry_(
-        defer_: Union[dt.timedelta, int] = dt.timedelta(seconds=1),
-        max_tries: int = 5,
+    defer_: Union[dt.timedelta, int] = dt.timedelta(seconds=1),
+    max_tries: int = 1,
 ):
     def func_wrapper(func):
         @wraps(func)
@@ -52,7 +49,7 @@ def retry_(
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
-                if args[0]['job_try'] == max_tries:
+                if args[0]["job_try"] == max_tries:
                     raise e from e
                 raise Retry(defer=defer_) from e
 

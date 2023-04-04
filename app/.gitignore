@@ -136,9 +136,3 @@ dmypy.json
 
 # vscode
 .vscode
-
-# idea
-.idea
-
-#docker
-*.override.yml

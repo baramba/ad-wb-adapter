@@ -3,7 +3,6 @@ from arq.connections import RedisSettings, ArqRedis
 
 from core.settings import settings
 
-
 async def get_arq() -> ArqRedis:
     return await create_pool(
         RedisSettings(
