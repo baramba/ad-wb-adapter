@@ -1,14 +1,19 @@
 from abc import ABC, abstractmethod
 
 from aio_pika import DeliveryMode, Message
-from aio_pika.abc import AbstractConnection, AbstractChannel, AbstractExchange
+from aio_pika.abc import (
+    AbstractConnection,
+    AbstractChannel,
+    AbstractExchange,
+    AbstractQueue as PikaAbstractQueue,
+)
 
 from core.settings import settings
 
 
 class AbstractQueue(ABC):
     @abstractmethod
-    async def publish(self, queue_name: str, message: str, priority: int):
+    async def publish(self, queue_name: str, message_body: str, priority: int):
         pass
 
     @abstractmethod
@@ -29,22 +34,17 @@ class BaseRabbitQueue(AbstractQueue):
         self.exchange = await self.channel.get_exchange(name=settings.RABBITMQ.EXCHANGE)
         return self
 
-    async def create_queue(self, queue_name: str):
-        queue = await self.channel.declare_queue(
-            name=queue_name,
-            durable=True,
-            arguments={'x-max-priority': 10}
+    async def create_queue(self, queue_name: str) -> None:
+        queue: PikaAbstractQueue = await self.channel.declare_queue(
+            name=queue_name, durable=True, arguments={"x-max-priority": 10}
         )
-        await queue.bind(
-            exchange=self.exchange,
-            routing_key=queue_name
-        )
+        await queue.bind(exchange=self.exchange, routing_key=queue_name)
 
-    async def publish(self, queue_name: str, message: str, priority: int) -> None:
+    async def publish(self, queue_name: str, message_body: str, priority: int) -> None:
         message = Message(
-            body=message.encode('utf-8'),
+            body=message_body.encode("utf-8"),
             delivery_mode=DeliveryMode.PERSISTENT,
-            priority=priority
+            priority=priority,
         )
 
         await self.exchange.publish(
@@ -59,7 +59,5 @@ class BaseQueue:
 
     async def publish(self, queue_name: str, message: str, priority: int) -> None:
         await self.queue.publish(
-            queue_name=queue_name,
-            message=message,
-            priority=priority
+            queue_name=queue_name, message_body=message, priority=priority
         )

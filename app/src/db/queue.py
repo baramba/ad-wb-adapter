@@ -1,3 +1,3 @@
 from services.queue import AbstractQueue
 
-queue: AbstractQueue = None
+queue: AbstractQueue | None = None

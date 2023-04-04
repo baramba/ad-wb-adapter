@@ -1,11 +1,13 @@
 version: '3.8'
 
-x-redis-cred: &redis-cred
+x-redis-cred:
+  &redis-cred
   REDIS_HOST: ${REDIS_HOST}
   REDIS_PORT: ${REDIS_PORT}
   REDIS_PASSWORD: ${REDIS_PASSWORD}
 
-x-rabbitmq-cred: &rabbitmq-cred
+x-rabbitmq-cred:
+  &rabbitmq-cred
   RABBITMQ_HOST: ${RABBITMQ_HOST}
   RABBITMQ_PORT: ${RABBITMQ_PORT}
   RABBITMQ_LOGIN: ${RABBITMQ_LOGIN}
@@ -15,8 +17,9 @@ x-rabbitmq-cred: &rabbitmq-cred
   RABBITMQ_DEFAULT_USER: ${RABBITMQ_LOGIN}
   RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
 
-x-app-cred: &app-cred
-  PROJECT_NAME: WILDBERRIES_ADAPTER
+x-app-cred:
+  &app-cred
+  PROJECT_NAME: wb-adapter
   X_USER_ID: ${X_USER_ID}
   X_SUPPLIER_ID: ${X_SUPPLIER_ID}
   X_SUPPLIER_ID_EXTERNAl: ${X_SUPPLIER_ID_EXTERNAl}
@@ -48,11 +51,10 @@ services:
     volumes:
       - rabbitmq_volume:/var/lib/rabbitmq/
     healthcheck:
-      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
       interval: 3s
       timeout: 5s
       retries: 3
-
 
   app:
     build: ./app

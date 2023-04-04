@@ -24,73 +24,52 @@ from utils import depends_decorator, run_kinda_async_task, retry_
     arq_poll=get_arq,
 )
 async def create_full_campaign(
-        ctx,
-        job_id_: uuid.UUID,
-        campaign: CreateCampaignDTO,
-        routing_key: str,
-        redis: Redis = None,
-        queue_service: BaseQueue = None,
-        arq_poll: ArqRedis = None,
+    ctx,
+    job_id_: uuid.UUID,
+    campaign: CreateCampaignDTO,
+    routing_key: str,
+    redis: Redis = None,
+    queue_service: BaseQueue = None,
+    arq_poll: ArqRedis = None,
 ):
     campaign_id = None
     rabbitmq_message = RabbitJobResult(job_id=job_id_).json()
     routing_key = f"{settings.RABBITMQ.SENDER_KEY}.task_complete.{routing_key}"
     try:
-        campaign_id = await run_kinda_async_task(
-            arq_poll,
-            '_create_campaign',
-            campaign
-        )
+        campaign_id = await run_kinda_async_task(arq_poll, "_create_campaign", campaign)
 
-        campaign = await run_kinda_async_task(
-            arq_poll,
-            '_add_amount_to_campaign_budget',
-            campaign_id,
-            campaign
+        await run_kinda_async_task(
+            arq_poll, "_add_amount_to_campaign_budget", campaign_id, campaign
         )
 
         budget = await run_kinda_async_task(
-            arq_poll,
-            '_set_campaign_bet',
-            campaign_id,
-            campaign
+            arq_poll, "_set_campaign_bet", campaign_id, campaign
         )
 
         await run_kinda_async_task(
-            arq_poll,
-            '_add_keywords_to_campaign',
-            campaign_id,
-            campaign
+            arq_poll, "_add_keywords_to_campaign", campaign_id, campaign
         )
 
         await run_kinda_async_task(
-            arq_poll,
-            '_add_keywords_to_campaign',
-            campaign_id,
-            campaign
+            arq_poll, "_add_keywords_to_campaign", campaign_id, campaign
         )
 
-        await run_kinda_async_task(
-            arq_poll,
-            '_start_campaign',
-            campaign_id,
-            budget
-        )
+        await run_kinda_async_task(arq_poll, "_start_campaign", campaign_id, budget)
 
     except Exception as e:
         if campaign_id is None:
             value = JobResult(
                 code=e.__class__.__name__,
-                status_code=getattr(e, 'status_code', 999),
+                status_code=getattr(e, "status_code", 999),
                 text=str(e),
-                response={}
+                response={},
             ).json()
         else:
             value = JobResult(
                 code=e.__class__.__name__,
-                status_code=getattr(e, 'status_code', 999),
+                status_code=getattr(e, "status_code", 999),
                 text=str(e),
-                response=CreateCampaignResponse(id=campaign_id)
+                response=CreateCampaignResponse(id=campaign_id),
             ).json()
 
         await redis.set(
@@ -98,9 +77,9 @@ async def create_full_campaign(
             value=value,
             ex=1800,
         )
-        await queue_service.publish(queue_name=routing_key,
-                                    message=rabbitmq_message,
-                                    priority=1)
+        await queue_service.publish(
+            queue_name=routing_key, message=rabbitmq_message, priority=1
+        )
 
         if campaign_id is None:
             raise Retry(defer=30)
@@ -110,15 +89,15 @@ async def create_full_campaign(
     await redis.set(
         name=str(job_id_),
         value=JobResult(
-            code='CampaignStartSuccess',
+            code="CampaignStartSuccess",
             status_code=201,
-            response=CreateCampaignResponse(id=campaign_id)
+            response=CreateCampaignResponse(id=campaign_id),
         ).json(),
-        ex=1800
+        ex=1800,
     )
-    await queue_service.publish(queue_name=routing_key,
-                                message=rabbitmq_message,
-                                priority=1)
+    await queue_service.publish(
+        queue_name=routing_key, message=rabbitmq_message, priority=1
+    )
 
 
 @depends_decorator(
@@ -126,9 +105,9 @@ async def create_full_campaign(
 )
 @retry_()
 async def _create_campaign(
-        ctx,
-        campaign: CreateCampaignDTO,
-        campaign_adapter: CampaignAdapter = None,
+    ctx,
+    campaign: CreateCampaignDTO,
+    campaign_adapter: CampaignAdapter = None,
 ):
     campaign_id = await campaign_adapter.create_campaign(
         name=campaign.name,
@@ -142,10 +121,10 @@ async def _create_campaign(
 )
 @retry_()
 async def _add_amount_to_campaign_budget(
-        ctx,
-        campaign_id: int,
-        campaign: CreateCampaignDTO,
-        campaign_adapter: CampaignAdapter = None,
+    ctx,
+    campaign_id: int,
+    campaign: CreateCampaignDTO,
+    campaign_adapter: CampaignAdapter = None,
 ):
     current_budget = await campaign_adapter.get_campaign_budget(id=campaign_id)
     current_budget = current_budget["budget"]["total"]
@@ -154,8 +133,7 @@ async def _add_amount_to_campaign_budget(
     if current_budget != 0:
         campaign.budget = max(100, math.ceil(current_budget / 50) * 50)
     await campaign_adapter.add_amount_to_campaign_budget(
-        id=campaign_id,
-        amount=campaign.budget
+        id=campaign_id, amount=campaign.budget
     )
     return campaign
 
@@ -165,14 +143,12 @@ async def _add_amount_to_campaign_budget(
 )
 @retry_()
 async def _set_campaign_bet(
-        ctx,
-        campaign_id: int,
-        campaign: CreateCampaignDTO,
-        campaign_adapter: CampaignAdapter = None,
+    ctx,
+    campaign_id: int,
+    campaign: CreateCampaignDTO,
+    campaign_adapter: CampaignAdapter = None,
 ) -> dict:
-    return await campaign_adapter.set_campaign_bet(
-        id=campaign_id,
-        bet=campaign.budget)
+    return await campaign_adapter.set_campaign_bet(id=campaign_id, bet=campaign.budget)
 
 
 @depends_decorator(
@@ -180,14 +156,13 @@ async def _set_campaign_bet(
 )
 @retry_()
 async def _add_keywords_to_campaign(
-        ctx,
-        campaign_id: int,
-        campaign: CreateCampaignDTO,
-        campaign_adapter: CampaignAdapter = None,
+    ctx,
+    campaign_id: int,
+    campaign: CreateCampaignDTO,
+    campaign_adapter: CampaignAdapter = None,
 ):
     return await campaign_adapter.add_keywords_to_campaign(
-        id=campaign_id,
-        keywords=campaign.keywords
+        id=campaign_id, keywords=campaign.keywords
     )
 
 
@@ -196,15 +171,12 @@ async def _add_keywords_to_campaign(
 )
 @retry_()
 async def _start_campaign(
-        ctx,
-        campaign_id: int,
-        budget: dict,
-        campaign_adapter: CampaignAdapter = None,
+    ctx,
+    campaign_id: int,
+    budget: dict,
+    campaign_adapter: CampaignAdapter = None,
 ):
-    return await campaign_adapter.start_campaign(
-        id=campaign_id,
-        budget=budget
-    )
+    return await campaign_adapter.start_campaign(id=campaign_id, budget=budget)
 
 
 private_tasks = [
