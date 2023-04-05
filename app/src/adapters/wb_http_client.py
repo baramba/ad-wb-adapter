@@ -1,5 +1,7 @@
 import asyncio
+import contextlib
 from functools import wraps
+import json
 import httpx
 import fake_useragent as fk_ua
 from core.settings import logger
@@ -29,6 +31,40 @@ class BaseAdapter:
             "x-supplier-id-external": supplier_id_external,
             "WBToken": wb_token,
         }
+        self.client.event_hooks = {
+            "request": [self.log_request],
+            "response": [self.log_response],
+        }
+
+    def cut_string(self, string: str, length: int) -> str:
+        string = string.replace("\n", "")
+        return "{0} {1}".format(string[:length], "..." * (len(string) > length))
+
+    async def log_request(self, request: httpx.Request):
+        content: str = request.content.decode("utf-8")
+
+        with contextlib.suppress(ValueError):
+            content = json.loads(content)
+
+        logger.info(
+            "{0}: {1}, data: {2}".format(
+                request.method,
+                request.url,
+                self.cut_string(str(content), 75),
+            )
+        )
+
+    async def log_response(self, response: httpx.Response):
+        request = response.request
+        content: str = (await response.aread()).decode("utf-8")
+        logger.info(
+            "{0}: {1}, {2}, data: {3}".format(
+                request.method,
+                request.url,
+                response.status_code,
+                self.cut_string(str(content), 75),
+            )
+        )
 
     async def _post(
         self,
@@ -36,13 +72,10 @@ class BaseAdapter:
         headers: dict | None = None,
         cookies: dict | None = None,
         body: dict | None = None,
-        method: str = __name__,
     ) -> httpx.Response:
         headers = dict() if headers is None else headers
         cookies = dict() if cookies is None else cookies
         body = dict() if body is None else body
-
-        logger.info("{0}:{1}".format(__name__, url))
 
         response: httpx.Response = await self.client.post(
             url=url,
@@ -50,7 +83,7 @@ class BaseAdapter:
             cookies=self.cookies | cookies,
             json=body,
         )
-        logger.info("{0}, {1}, {2}".format(method, url, response))
+
         return response
 
     async def _put(
@@ -59,20 +92,17 @@ class BaseAdapter:
         headers: dict | None = None,
         cookies: dict | None = None,
         body: dict | None = None,
-        method: str = __name__,
     ) -> httpx.Response:
         headers = dict() if headers is None else headers
         cookies = dict() if cookies is None else cookies
         body = dict() if body is None else body
 
-        logger.info("{0}, {1}, {2}".format(method, url, body))
         response: httpx.Response = await self.client.put(
             url=url,
             headers=self.headers | headers,
             cookies=self.cookies | cookies,
             json=body,
         )
-        logger.info("{0}, {1}, {2}".format(method, url, response))
         return response
 
     async def _get(
@@ -81,36 +111,15 @@ class BaseAdapter:
         headers: dict | None = None,
         cookies: dict | None = None,
         query: dict | None = None,
-        method: str = __name__,
     ) -> httpx.Response:
         headers = dict() if headers is None else headers
         cookies = dict() if cookies is None else cookies
         query = dict() if query is None else query
 
-        logger.info("{0}, {1}, {2}".format(method, url, query))
         response: httpx.Response = await self.client.get(
             url=url,
             headers=self.headers | headers,
             cookies=self.cookies | cookies,
             params=query,
         )
-        logger.info("{0}, {1}, {2}".format(method, url, response))
-
         return response
-
-
-def retry_ahttpx(codes: tuple[str, ...], retries: int = 5):
-    def func_wrapper(func):
-        @wraps(func)
-        async def inner(*args, **kwargs):
-            for _ in range(retries):
-                result: httpx.Response = await func(*args, **kwargs)
-                if any([code in str(result.status_code) for code in codes]):
-                    await asyncio.sleep(2)
-                    continue
-                return result
-            result.raise_for_status()
-
-        return inner
-
-    return func_wrapper
