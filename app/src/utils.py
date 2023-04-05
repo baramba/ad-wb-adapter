@@ -40,7 +40,7 @@ async def run_kinda_async_task(arq_poll: ArqRedis, *args, **kwargs) -> Any:
 
 
 def retry_(
-    defer_: Union[dt.timedelta, int] = dt.timedelta(seconds=1),
+    defer_: Union[dt.timedelta, int] = dt.timedelta(seconds=5),
     max_tries: int = 1,
 ):
     def func_wrapper(func):
