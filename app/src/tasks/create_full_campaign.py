@@ -19,6 +19,8 @@ from utils import depends_decorator, run_kinda_async_task, retry_
 
 from core.settings import logger
 
+from core.settings import logger
+
 
 @depends_decorator(
     redis=get_redis,
@@ -76,6 +78,7 @@ async def create_full_campaign(
         )
 
         if campaign_id is None:
+            logger.error("Campaign_id is None.")
             logger.error("Campaign_id is None.")
 
         return
@@ -159,6 +162,19 @@ async def _switch_on_fixed_list(
     campaign_adapter=get_campaign_adapter,
 )
 @retry_()
+async def _switch_on_fixed_list(
+    ctx,
+    campaign_id: int,
+    campaign_adapter: CampaignAdapter,
+):
+    """Включает использование фиксированных фраз в рекламной кампании."""
+    return await campaign_adapter.switch_on_fixed_list(id=campaign_id)
+
+
+@depends_decorator(
+    campaign_adapter=get_campaign_adapter,
+)
+@retry_()
 async def _start_campaign(
     ctx,
     campaign_id: int,
@@ -172,5 +188,6 @@ private_tasks = [
     _replenish_budget,
     _add_keywords_to_campaign,
     _start_campaign,
+    _switch_on_fixed_list,
     _switch_on_fixed_list,
 ]

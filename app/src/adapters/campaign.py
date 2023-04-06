@@ -1,9 +1,9 @@
-import asyncio
 import collections
 import math
 
 from httpx import HTTPStatusError
 
+from adapters.wb_http_client import BaseAdapter
 from adapters.wb_http_client import BaseAdapter
 from exceptions.campaign import (
     CampaignCreateError,
@@ -18,9 +18,11 @@ class CampaignAdapter(BaseAdapter):
 
         try:
             result = await self._get(url=url)
+            result = await self._get(url=url)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignCreateError.init(
+                e.response.status_code, "Ошибка при получении subject id."
                 e.response.status_code, "Ошибка при получении subject id."
             )
         subject_id: int = result.json()["data"]["products"][0]["subjectId"]
@@ -28,14 +30,18 @@ class CampaignAdapter(BaseAdapter):
 
     async def get_category(self, nms: int) -> str:
         subject_id: int = await self.get_subject_id(nms=nms)
+    async def get_category(self, nms: int) -> str:
+        subject_id: int = await self.get_subject_id(nms=nms)
 
         url = "https://cmp.wildberries.ru/backend/api/v2/search/supplier-subjects"
 
         try:
             result = await self._get(url=url)
+            result = await self._get(url=url)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignCreateError.init(
+                e.response.status_code, "Ошибка при получении category."
                 e.response.status_code, "Ошибка при получении category."
             )
         category: str | None = None
@@ -72,9 +78,11 @@ class CampaignAdapter(BaseAdapter):
 
         try:
             result = await self._post(url=url, body=body, headers=headers)
+            result = await self._post(url=url, body=body, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignCreateError.init(
+                e.response.status_code, "Ошибка при создании компании."
                 e.response.status_code, "Ошибка при создании компании."
             )
 
@@ -87,9 +95,11 @@ class CampaignAdapter(BaseAdapter):
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget"
         headers = {
             "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
         }
 
         try:
+            result = await self._get(url=url, headers=headers)
             result = await self._get(url=url, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
@@ -123,9 +133,11 @@ class CampaignAdapter(BaseAdapter):
 
         try:
             result = await self._get(url=url)
+            result = await self._get(url=url)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignStartError.init(
+                e.response.status_code, "Ошибка при включении фиксированных фраз."
                 e.response.status_code, "Ошибка при включении фиксированных фраз."
             )
 
@@ -158,9 +170,15 @@ class CampaignAdapter(BaseAdapter):
                 body=body,
                 headers=headers,
             )
+            result = await self._post(
+                url=url,
+                body=body,
+                headers=headers,
+            )
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignInitError.init(
+                e.response.status_code, "Ошибка при добавлении бюджета компании."
                 e.response.status_code, "Ошибка при добавлении бюджета компании."
             )
 
