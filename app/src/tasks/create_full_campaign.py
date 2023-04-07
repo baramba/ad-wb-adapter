@@ -1,10 +1,7 @@
-import math
 import uuid
 
-from arq import Retry, ArqRedis
-from redis.asyncio import Redis
-
 from adapters.campaign import CampaignAdapter
+from arq import ArqRedis
 from core.settings import settings
 from depends.adapters.campaign import get_campaign_adapter
 from depends.arq import get_arq
@@ -12,14 +9,27 @@ from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
 from dto.campaign import CreateCampaignDTO
 from dto.job_result import RabbitJobResult
+from redis.asyncio import Redis
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
 from services.queue import BaseQueue
-from utils import depends_decorator, run_kinda_async_task, retry_
+from utils import depends_decorator, retry_, run_kinda_async_task
 
-from core.settings import logger
 
-from core.settings import logger
+async def save_and_notify_job_result(
+    job_result: str,
+    name: str,
+    redis: Redis,
+    queue_service: BaseQueue,
+    routing_key: str,
+    message: str,
+):
+    await redis.set(
+        name=name,
+        value=job_result,
+        ex=1800,
+    )
+    await queue_service.publish(queue_name=routing_key, message=message, priority=1)
 
 
 @depends_decorator(
@@ -36,65 +46,42 @@ async def create_full_campaign(
     queue_service: BaseQueue,
     arq_poll: ArqRedis,
 ):
-    campaign_id = None
+    campaign_id: int | None = None
     rabbitmq_message = RabbitJobResult(job_id=job_id_).json()
     routing_key = f"{settings.RABBITMQ.SENDER_KEY}.task_complete.{routing_key}"
+    job_result: str = ""
     try:
         campaign_id = await run_kinda_async_task(arq_poll, "_create_campaign", campaign)
-
         await run_kinda_async_task(arq_poll, "_replenish_budget", campaign_id, campaign)
-
         await run_kinda_async_task(
             arq_poll, "_add_keywords_to_campaign", campaign_id, campaign
         )
-
         await run_kinda_async_task(arq_poll, "_switch_on_fixed_list", campaign_id)
-
-        await run_kinda_async_task(arq_poll, "_start_campaign", campaign_id=campaign_id)
+        await run_kinda_async_task(arq_poll, "_start_campaign", campaign_id)
 
     except Exception as e:
-        if campaign_id is None:
-            value = JobResult(
-                code=e.__class__.__name__,
-                status_code=getattr(e, "status_code", 999),
-                text=str(e),
-                response={},
-            ).json()
-        else:
-            value = JobResult(
-                code=e.__class__.__name__,
-                status_code=getattr(e, "status_code", 999),
-                text=str(e),
-                response=CreateCampaignResponse(id=campaign_id),
-            ).json()
-
-        await redis.set(
-            name=str(job_id_),
-            value=value,
-            ex=1800,
-        )
-        await queue_service.publish(
-            queue_name=routing_key, message=rabbitmq_message, priority=1
-        )
-
-        if campaign_id is None:
-            logger.error("Campaign_id is None.")
-            logger.error("Campaign_id is None.")
-
-        return
-
-    await redis.set(
-        name=str(job_id_),
-        value=JobResult(
+        job_result = JobResult(
+            code=e.__class__.__name__,
+            status_code=getattr(e, "status_code", 999),
+            text=str(e),
+            response={},
+        ).json()
+    else:
+        job_result = JobResult(
             code="CampaignStartSuccess",
             status_code=201,
-            response=CreateCampaignResponse(id=campaign_id),
-        ).json(),
-        ex=1800,
-    )
-    await queue_service.publish(
-        queue_name=routing_key, message=rabbitmq_message, priority=1
-    )
+            response=CreateCampaignResponse(id=str(campaign_id)),
+        ).json()
+
+    finally:
+        await save_and_notify_job_result(
+            job_result=job_result,
+            name=str(job_id_),
+            message=rabbitmq_message,
+            routing_key=routing_key,
+            redis=redis,
+            queue_service=queue_service,
+        )
 
 
 @depends_decorator(
@@ -143,19 +130,6 @@ async def _add_keywords_to_campaign(
     return await campaign_adapter.add_keywords_to_campaign(
         id=campaign_id, keywords=campaign.keywords
     )
-
-
-@depends_decorator(
-    campaign_adapter=get_campaign_adapter,
-)
-@retry_()
-async def _switch_on_fixed_list(
-    ctx,
-    campaign_id: int,
-    campaign_adapter: CampaignAdapter,
-):
-    """Включает использование фиксированных фраз в рекламной кампании."""
-    return await campaign_adapter.switch_on_fixed_list(id=campaign_id)
 
 
 @depends_decorator(
