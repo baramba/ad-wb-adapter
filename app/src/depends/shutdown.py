@@ -1,5 +1,5 @@
-from db.redis import get_redis
 from core.settings import logger
+from db.redis import get_redis
 
 
 async def shutdown():

@@ -1,62 +1,56 @@
 import asyncio
 import collections
-import contextlib
+import math
 
-from httpx import HTTPStatusError
-
-from adapters.http_client import BaseAdapter
+from adapters.wb_http_client import BaseAdapter
 from exceptions.campaign import (
     CampaignCreateError,
     CampaignInitError,
     CampaignStartError,
 )
-from core.settings import logger
+from httpx import HTTPStatusError
 
 
 class CampaignAdapter(BaseAdapter):
     async def get_subject_id(self, nms: int) -> int:
-        url = f"https://card.wb.ru/cards/detail?nm={nms}"
-        for _ in range(5):
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._get(url=url, method=__name__)
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
+        url: str = f"https://card.wb.ru/cards/detail?nm={nms}"
 
         try:
+            result = await self._get(url=url)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignCreateError.init(
-                result.status_code, "Ошибка при получении subject id"
+                e.response.status_code, "Ошибка при получении subject id."
             )
         subject_id: int = result.json()["data"]["products"][0]["subjectId"]
         return subject_id
 
-    async def get_keyword(self, nms: int) -> str:
-        subject_id = await self.get_subject_id(nms=nms)
+    async def get_category(self, nms: int) -> str:
+        subject_id: int = await self.get_subject_id(nms=nms)
 
         url = "https://cmp.wildberries.ru/backend/api/v2/search/supplier-subjects"
 
-        for _ in range(5):
-            logger.info("{0}:{1};".format(__name__, url))
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._get(url=url, method=__name__)
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
-
         try:
+            result = await self._get(url=url)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignCreateError.init(
-                result.status_code, "Ошибка при получении subject keyword"
+                e.response.status_code, "Ошибка при получении category."
             )
-
+        category: str | None = None
         for item in result.json():
             if item["id"] == subject_id:
-                requested_data: int = item["name"]
-                return requested_data
-        # todo raise error
+                category = item["name"]
+
+        if not category:
+            raise CampaignCreateError.init(
+                result.status_code,
+                "Не удалось получить название категории для subject_id={0}".format(
+                    subject_id
+                ),
+            )
+
+        return category
 
     async def create_campaign(
         self,
@@ -64,8 +58,9 @@ class CampaignAdapter(BaseAdapter):
         nms: list[int],
     ) -> int:
         kw_nms = collections.defaultdict(list)
-        for kw, nms in [(await self.get_keyword(nms=item), item) for item in nms]:
-            kw_nms[kw].append(nms)
+
+        for kw, nms_ in [(await self.get_category(nms=item), item) for item in nms]:
+            kw_nms[kw].append(nms_)
 
         url = "https://cmp.wildberries.ru/backend/api/v2/search/save-ad"
         body = {
@@ -73,20 +68,13 @@ class CampaignAdapter(BaseAdapter):
             "groups": [{"nms": v, "key_word": k} for k, v in kw_nms.items()],
         }
         headers = {"Referer": "https://cmp.wildberries.ru/campaigns/create/search"}
-        for _ in range(5):
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._post(
-                    url=url, body=body, headers=headers, method=__name__
-                )
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
 
         try:
+            result = await self._post(url=url, body=body, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignCreateError.init(
-                result.status_code, "Ошибка при создании компании"
+                e.response.status_code, "Ошибка при создании компании."
             )
 
         return result.json()["id"]
@@ -94,121 +82,127 @@ class CampaignAdapter(BaseAdapter):
     async def get_campaign_budget(
         self,
         id: int,
-    ) -> dict:
-        url = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
+    ) -> int:
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget"
         headers = {
-            "Referer": f"https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}"
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
         }
 
-        for _ in range(5):
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._get(url=url, headers=headers, method=__name__)
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
-
         try:
+            result = await self._get(url=url, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignInitError.init(
-                result.status_code, f"Ошибка при получении бюджета компании"
+                e.response.status_code, "Ошибка при получении бюджета компании."
             )
-        return result.json()
+        return result.json()["total"]
 
     async def add_keywords_to_campaign(
         self,
         id: int,
         keywords: list,
     ):
-        url = (
-            f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus?fixed=true"
-        )
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus"
         body = {"pluse": keywords}
-        for _ in range(5):
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._post(url=url, body=body, method=__name__)
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
-
         try:
+            result = await self._post(url=url, body=body)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignStartError.init(
-                result.status_code, "Ошибка при добавлении ключевых слов"
+                e.response.status_code, "Ошибка при добавлении ключевых слов."
             )
 
-    async def add_amount_to_campaign_budget(
+    async def switch_on_fixed_list(
+        self,
+        id: int,
+    ):
+        url = (
+            f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus?fixed=true"
+        )
+
+        try:
+            result = await self._get(url=url)
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise CampaignStartError.init(
+                e.response.status_code, "Ошибка при включении фиксированных фраз."
+            )
+
+    async def replenish_budget(
         self,
         id: int,
         amount: int,
     ):
-        url = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget/deposit"
+        url: str = (
+            f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget/deposit"
+        )
         headers = {
             "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
         }
-        body = {"sum": amount, "type": 0}
-        for _ in range(5):
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._post(
-                    url=url, body=body, headers=headers, method=__name__
-                )
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
+
+        budget_amount: int = await self.get_campaign_budget(id=id)
+        new_budget_amount: int = amount
+
+        if budget_amount >= amount:
+            return
+
+        if budget_amount != 0:
+            new_budget_amount = max(100, math.ceil(budget_amount / 50) * 50)
+
+        body = {"sum": new_budget_amount, "type": 0}
 
         try:
+            result = await self._post(
+                url=url,
+                body=body,
+                headers=headers,
+            )
+            result = await self._post(
+                url=url,
+                body=body,
+                headers=headers,
+            )
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignInitError.init(
-                result.status_code, "Ошибка при добавлении бюджета компании"
+                e.response.status_code, "Ошибка при добавлении бюджета компании."
             )
 
-    async def set_campaign_bet(
-        self,
-        id: int,
-        bet: int,
-    ) -> dict:
-        budget = await self.get_campaign_budget(id=id)
-        url = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/save"
-        bugdet_len = len(budget["place"])
-        budget["budget"]["total"] = bet
-        for i in range(bugdet_len):
-            budget["place"][i]["price"] = bet // bugdet_len
-
-        for _ in range(5):
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._put(url=url, body=budget, method=__name__)
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
+    async def get_campaign_config(self, id: int):
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
+        headers = {
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
+        }
 
         try:
+            result = await self._get(url=url, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise CampaignInitError.init(
-                result.status_code, "Ошибка при установке ставки"
+            raise CampaignStartError.init(
+                e.response.status_code, "Ошибка при получении конфигурации кампании."
             )
-        return budget
 
-    async def start_campaign(self, id: int, budget: dict):
-        url = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
+        return result.json()
+
+    async def start_campaign(self, id: int):
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
 
         headers = {
             "Referer": f"https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}"
         }
-        for _ in range(5):
-            with contextlib.suppress(HTTPStatusError):
-                result = await self._put(
-                    url=url, body=budget, headers=headers, method=__name__
-                )
-                result.raise_for_status()
-                break
-            await asyncio.sleep(1)
-
+        budget: int = await self.get_campaign_budget(id=id)
+        config: dict = await self.get_campaign_config(id=id)
+        config["budget"]["total"] = budget
+        # Задержка, чтобы избежать - too many requests (429)
+        await asyncio.sleep(1)
         try:
+            result = await self._put(
+                url=url,
+                body=config,
+                headers=headers,
+            )
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignStartError.init(
-                result.status_code, "Ошибка при запуске компании"
+                e.response.status_code, "Ошибка при запуске кампании."
             )

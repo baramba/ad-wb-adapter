@@ -1,7 +1,7 @@
 import datetime as dt
 import inspect
 from functools import wraps
-from typing import Callable, Awaitable, Any, Union, Iterable
+from typing import Any, Awaitable, Callable, Iterable, Union
 
 from arq import ArqRedis, Retry
 
@@ -10,7 +10,6 @@ def depends_decorator(
     **decorator_kwargs: Union[
         Callable[[], Awaitable[Any]],
         Callable[[], Any],
-        tuple[Awaitable[Any], Iterable, dict],
         tuple[Callable[[Any], Any], Iterable, dict],
     ]
 ):
@@ -36,11 +35,13 @@ def depends_decorator(
 
 async def run_kinda_async_task(arq_poll: ArqRedis, *args, **kwargs) -> Any:
     job = await arq_poll.enqueue_job(*args, **kwargs)
+    if job is None:
+        raise Exception("Не удалось запустить задачу.")
     return await job.result()
 
 
 def retry_(
-    defer_: Union[dt.timedelta, int] = dt.timedelta(seconds=1),
+    defer_: Union[dt.timedelta, int] = dt.timedelta(seconds=5),
     max_tries: int = 1,
 ):
     def func_wrapper(func):
