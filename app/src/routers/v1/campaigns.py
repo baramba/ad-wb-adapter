@@ -1,13 +1,11 @@
-from typing import Annotated
 import uuid
+from typing import Annotated
 
 from arq import ArqRedis
-
-from fastapi import APIRouter, Depends, status, Header
-
 from depends.arq import get_arq
 from dto.campaign import CreateCampaignDTO
-from schemas.v1.base import RequestQueuedResponse, JobResult
+from fastapi import APIRouter, Depends, Header, status
+from schemas.v1.base import JobResult, RequestQueuedResponse
 from schemas.v1.campaign import CreateCampaignResponse
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])

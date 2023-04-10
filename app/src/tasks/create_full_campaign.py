@@ -1,4 +1,5 @@
 import uuid
+from http import HTTPStatus
 
 from arq import ArqRedis
 from core.settings import settings
@@ -73,13 +74,16 @@ async def create_full_campaign(
             code=e.__class__.__name__,
             status_code=getattr(e, "status_code", 999),
             text=str(e),
-            response={},
+            response=CreateCampaignResponse(source_id=campaign.source_id),
         ).json()
     else:
         job_result = JobResult(
             code="CampaignStartSuccess",
-            status_code=201,
-            response=CreateCampaignResponse(id=str(wb_campaign_id)),
+            status_code=HTTPStatus.CREATED,
+            response=CreateCampaignResponse(
+                wb_campaign_id=str(wb_campaign_id),
+                source_id=campaign.source_id,
+            ),
         ).json()
 
     finally:
