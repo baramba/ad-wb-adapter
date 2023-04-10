@@ -1,14 +1,15 @@
 from logging.config import dictConfig
-from arq.connections import RedisSettings
 
-from core.settings import settings
-from depends import startup as su, shutdown as sd
-from tasks import tasks
+from arq.connections import RedisSettings
 from core.logger import logging_conf
+from core.settings import settings
+from depends import shutdown as sd
+from depends import startup as su
+from tasks import tasks
 
 
 async def startup(ctx):
-    # redefine arq logger conf
+    # Переопределяем настройки логирования для arc
     dictConfig(logging_conf.dict())
     await su.startup()
 

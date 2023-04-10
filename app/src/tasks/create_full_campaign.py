@@ -1,9 +1,7 @@
 import uuid
 
-from adapters.campaign import CampaignAdapter
 from arq import ArqRedis
 from core.settings import settings
-from depends.adapters.campaign import get_campaign_adapter
 from depends.arq import get_arq
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
@@ -13,7 +11,8 @@ from redis.asyncio import Redis
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
 from services.queue import BaseQueue
-from utils import depends_decorator, retry_, run_kinda_async_task
+from tasks.campaign_tasks import CampaignTaskManager
+from utils import depends_decorator
 
 
 async def save_and_notify_job_result(
@@ -46,18 +45,28 @@ async def create_full_campaign(
     queue_service: BaseQueue,
     arq_poll: ArqRedis,
 ):
-    campaign_id: int | None = None
+    wb_campaign_id: int | None = None
     rabbitmq_message = RabbitJobResult(job_id=job_id_).json()
     routing_key = f"{settings.RABBITMQ.SENDER_KEY}.task_complete.{routing_key}"
     job_result: str = ""
     try:
-        campaign_id = await run_kinda_async_task(arq_poll, "_create_campaign", campaign)
-        await run_kinda_async_task(arq_poll, "_replenish_budget", campaign_id, campaign)
-        await run_kinda_async_task(
-            arq_poll, "_add_keywords_to_campaign", campaign_id, campaign
+        wb_campaign_id = await CampaignTaskManager.create_campaign(
+            arq_poll=arq_poll, campaign=campaign
         )
-        await run_kinda_async_task(arq_poll, "_switch_on_fixed_list", campaign_id)
-        await run_kinda_async_task(arq_poll, "_start_campaign", campaign_id)
+
+        await CampaignTaskManager.replenish_budget(
+            arq_poll=arq_poll, wb_campaign_id=wb_campaign_id, amount=campaign.budget
+        )
+        await CampaignTaskManager.add_keywords_to_campaign(
+            arq_poll=arq_poll, wb_campaign_id=wb_campaign_id, keywords=campaign.keywords
+        )
+
+        await CampaignTaskManager.switch_on_fixed_list(
+            arq_poll=arq_poll, wb_campaign_id=wb_campaign_id
+        )
+        await CampaignTaskManager.start_campaign(
+            arq_poll=arq_poll, wb_campaign_id=wb_campaign_id
+        )
 
     except Exception as e:
         job_result = JobResult(
@@ -70,7 +79,7 @@ async def create_full_campaign(
         job_result = JobResult(
             code="CampaignStartSuccess",
             status_code=201,
-            response=CreateCampaignResponse(id=str(campaign_id)),
+            response=CreateCampaignResponse(id=str(wb_campaign_id)),
         ).json()
 
     finally:
@@ -82,86 +91,3 @@ async def create_full_campaign(
             redis=redis,
             queue_service=queue_service,
         )
-
-
-@depends_decorator(
-    campaign_adapter=get_campaign_adapter,
-)
-@retry_()
-async def _create_campaign(
-    ctx,
-    campaign: CreateCampaignDTO,
-    campaign_adapter: CampaignAdapter,
-):
-    """Создает рекламную кампанию."""
-    campaign_id = await campaign_adapter.create_campaign(
-        name=campaign.name,
-        nms=campaign.nms,
-    )
-    return campaign_id
-
-
-@depends_decorator(
-    campaign_adapter=get_campaign_adapter,
-)
-@retry_()
-async def _replenish_budget(
-    ctx,
-    campaign_id: int,
-    campaign: CreateCampaignDTO,
-    campaign_adapter: CampaignAdapter,
-):
-    """Увеличивает бюджет кампании до заданного значения с округлением в большую сторону."""
-
-    await campaign_adapter.replenish_budget(id=campaign_id, amount=campaign.budget)
-
-
-@depends_decorator(
-    campaign_adapter=get_campaign_adapter,
-)
-@retry_()
-async def _add_keywords_to_campaign(
-    ctx,
-    campaign_id: int,
-    campaign: CreateCampaignDTO,
-    campaign_adapter: CampaignAdapter,
-):
-    """Добавляет ключевые слова в рекламную кампанию."""
-    return await campaign_adapter.add_keywords_to_campaign(
-        id=campaign_id, keywords=campaign.keywords
-    )
-
-
-@depends_decorator(
-    campaign_adapter=get_campaign_adapter,
-)
-@retry_()
-async def _switch_on_fixed_list(
-    ctx,
-    campaign_id: int,
-    campaign_adapter: CampaignAdapter,
-):
-    """Включает использование фиксированных фраз в рекламной кампании."""
-    return await campaign_adapter.switch_on_fixed_list(id=campaign_id)
-
-
-@depends_decorator(
-    campaign_adapter=get_campaign_adapter,
-)
-@retry_()
-async def _start_campaign(
-    ctx,
-    campaign_id: int,
-    campaign_adapter: CampaignAdapter,
-):
-    return await campaign_adapter.start_campaign(id=campaign_id)
-
-
-private_tasks = [
-    _create_campaign,
-    _replenish_budget,
-    _add_keywords_to_campaign,
-    _start_campaign,
-    _switch_on_fixed_list,
-    _switch_on_fixed_list,
-]
