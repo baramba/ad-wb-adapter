@@ -1,7 +1,8 @@
 import contextlib
 import json
-import httpx
+
 import fake_useragent as fk_ua
+import httpx
 from core.settings import logger
 
 
@@ -38,7 +39,7 @@ class BaseAdapter:
         string = string.replace("\n", "")
         return "{0} {1}".format(string[:length], "..." * (len(string) > length))
 
-    async def log_request(self, request: httpx.Request):
+    async def log_request(self, request: httpx.Request) -> None:
         content: str = request.content.decode("utf-8")
 
         with contextlib.suppress(ValueError):
@@ -52,7 +53,7 @@ class BaseAdapter:
             )
         )
 
-    async def log_response(self, response: httpx.Response):
+    async def log_response(self, response: httpx.Response) -> None:
         request = response.request
         content: str = (await response.aread()).decode("utf-8")
         logger.info(

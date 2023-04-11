@@ -24,7 +24,7 @@ async def create_full_campaign(
     campaign: CreateCampaignDTO,
     routing_key: Annotated[str, Header()],
     arq: ArqRedis = Depends(get_arq),
-):
+) -> RequestQueuedResponse:
     job_id = uuid.uuid4()
 
     await arq.enqueue_job("create_full_campaign", job_id, campaign, routing_key)

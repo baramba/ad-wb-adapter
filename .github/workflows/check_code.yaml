@@ -1,0 +1,32 @@
+name: code-quality-check
+
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip && pip install poetry==1.2
+        poetry update --no-ansi
+
+    - name: Format with black
+      run: |
+        poetry run black --diff --check $(git ls-files '*.py')
+
+    - name: Lint with flake8
+      run: |
+        poetry run flake8 --count --exit-zero --statistics --show-source $(git ls-files '*.py')
+
+    - name: Lint with Mypy
+      env:
+        MYPYPATH: ${{ github.workspace }}/${{ env.SRC_PATH }}
+      run: |
+        export MYPYPATH=${{ github.workspace }}/app/src
+        poetry run mypy $(git ls-files '*.py')

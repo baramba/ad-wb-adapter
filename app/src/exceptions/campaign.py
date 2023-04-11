@@ -1,8 +1,11 @@
+from typing import Self
+
+
 class CampaignError(Exception):
     status_code: int
 
     @classmethod
-    def init(cls, status_code: int, message: str):
+    def init(cls, status_code: int, message: str) -> Self:
         result = cls(message)
         result.status_code = status_code
         return result

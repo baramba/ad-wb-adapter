@@ -23,7 +23,7 @@ async def save_and_notify_job_result(
     queue_service: BaseQueue,
     routing_key: str,
     message: str,
-):
+) -> None:
     await redis.set(
         name=name,
         value=job_result,
@@ -38,14 +38,14 @@ async def save_and_notify_job_result(
     arq_poll=get_arq,
 )
 async def create_full_campaign(
-    ctx,
+    ctx: dict,
     job_id_: uuid.UUID,
     campaign: CreateCampaignDTO,
     routing_key: str,
     redis: Redis,
     queue_service: BaseQueue,
     arq_poll: ArqRedis,
-):
+) -> None:
     wb_campaign_id: int | None = None
     rabbitmq_message = RabbitJobResult(job_id=job_id_).json()
     routing_key = f"{settings.RABBITMQ.SENDER_KEY}.task_complete.{routing_key}"

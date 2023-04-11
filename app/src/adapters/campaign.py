@@ -77,7 +77,7 @@ class CampaignAdapter(BaseAdapter):
                 e.response.status_code, "Ошибка при создании компании."
             )
 
-        return result.json()["id"]
+        return int(result.json()["id"])
 
     async def get_campaign_budget(
         self,
@@ -95,13 +95,13 @@ class CampaignAdapter(BaseAdapter):
             raise CampaignInitError.init(
                 e.response.status_code, "Ошибка при получении бюджета компании."
             )
-        return result.json()["total"]
+        return int(result.json()["total"])
 
     async def add_keywords_to_campaign(
         self,
         id: int,
         keywords: list,
-    ):
+    ) -> None:
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus"
         body = {"pluse": keywords}
         try:
@@ -115,7 +115,7 @@ class CampaignAdapter(BaseAdapter):
     async def switch_on_fixed_list(
         self,
         id: int,
-    ):
+    ) -> None:
         url = (
             f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/set-plus?fixed=true"
         )
@@ -132,7 +132,7 @@ class CampaignAdapter(BaseAdapter):
         self,
         id: int,
         amount: int,
-    ):
+    ) -> None:
         url: str = (
             f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget/deposit"
         )
@@ -168,7 +168,7 @@ class CampaignAdapter(BaseAdapter):
                 e.response.status_code, "Ошибка при добавлении бюджета компании."
             )
 
-    async def get_campaign_config(self, id: int):
+    async def get_campaign_config(self, id: int) -> dict:
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
         headers = {
             "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
@@ -182,9 +182,9 @@ class CampaignAdapter(BaseAdapter):
                 e.response.status_code, "Ошибка при получении конфигурации кампании."
             )
 
-        return result.json()
+        return dict(result.json())
 
-    async def start_campaign(self, id: int):
+    async def start_campaign(self, id: int) -> None:
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
 
         headers = {
