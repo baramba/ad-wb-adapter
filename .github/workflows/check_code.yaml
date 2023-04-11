@@ -26,6 +26,6 @@ jobs:
 
     - name: Lint with Mypy
       env:
-        MYPYPATH: ${{ github.workspace }}/${{ env.SRC_PATH }}
+        MYPYPATH: '${{ github.workspace }}/${{ env.SRC_PATH }}'
       run: |
         poetry run mypy $(git ls-files '*.py')
