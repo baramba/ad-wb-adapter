@@ -28,5 +28,4 @@ jobs:
       env:
         MYPYPATH: ${{ github.workspace }}/${{ env.SRC_PATH }}
       run: |
-        export MYPYPATH=${{ github.workspace }}/app/src
         poetry run mypy $(git ls-files '*.py')
