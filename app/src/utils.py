@@ -3,7 +3,7 @@ import inspect
 from functools import wraps
 from typing import Any, Awaitable, Callable, Iterable, Union
 
-from arq import ArqRedis, Retry
+from arq import Retry
 
 
 def depends_decorator(
@@ -12,10 +12,10 @@ def depends_decorator(
         Callable[[], Any],
         tuple[Callable[[Any], Any], Iterable, dict],
     ]
-):
-    def func_wrapper(func):
+) -> Callable:
+    def func_wrapper(func: Callable) -> Callable:
         @wraps(func)
-        async def inner(*args, **kwargs):
+        async def inner(*args: Any, **kwargs: Any) -> Any:
             inner_kwargs = {}
             for key in decorator_kwargs:
                 value = decorator_kwargs[key]
@@ -33,20 +33,13 @@ def depends_decorator(
     return func_wrapper
 
 
-async def run_kinda_async_task(arq_poll: ArqRedis, *args, **kwargs) -> Any:
-    job = await arq_poll.enqueue_job(*args, **kwargs)
-    if job is None:
-        raise Exception("Не удалось запустить задачу.")
-    return await job.result()
-
-
 def retry_(
     defer_: Union[dt.timedelta, int] = dt.timedelta(seconds=5),
     max_tries: int = 1,
-):
-    def func_wrapper(func):
+) -> Callable:
+    def func_wrapper(func: Callable) -> Callable:
         @wraps(func)
-        async def inner(*args, **kwargs):
+        async def inner(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:

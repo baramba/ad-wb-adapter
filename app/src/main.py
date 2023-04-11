@@ -15,17 +15,17 @@ app = FastAPI(
 
 
 @app.on_event("startup")
-async def startup():
+async def startup() -> None:
     await su.startup()
 
 
 @app.on_event("shutdown")
-async def shutdown():
+async def shutdown() -> None:
     await sd.shutdown()
 
 
 @app.get("/", tags=["about"])
-async def root():
+async def root() -> dict[str, dict]:
     return {
         "message": {
             "Project": settings.PROJECT_NAME,

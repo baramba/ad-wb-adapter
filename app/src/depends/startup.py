@@ -5,7 +5,7 @@ from redis.asyncio import Redis
 from services.queue import BaseRabbitQueue
 
 
-async def startup():
+async def startup() -> None:
     redis.client = Redis.from_url(settings.REDIS.build_url())
 
     connection = await aio_pika.connect(

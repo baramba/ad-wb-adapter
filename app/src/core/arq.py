@@ -8,13 +8,13 @@ from depends import startup as su
 from tasks import tasks
 
 
-async def startup(ctx):
+async def startup(ctx: dict) -> None:
     # Переопределяем настройки логирования для arc
     dictConfig(logging_conf.dict())
     await su.startup()
 
 
-async def shutdown(ctx):
+async def shutdown(ctx: dict) -> None:
     await sd.shutdown()
 
 

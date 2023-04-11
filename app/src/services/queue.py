@@ -1,23 +1,19 @@
 from abc import ABC, abstractmethod
+from typing import Self
 
 from aio_pika import DeliveryMode, Message
-from aio_pika.abc import (
-    AbstractConnection,
-    AbstractChannel,
-    AbstractExchange,
-    AbstractQueue as PikaAbstractQueue,
-)
-
+from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractExchange
+from aio_pika.abc import AbstractQueue as PikaAbstractQueue
 from core.settings import settings
 
 
 class AbstractQueue(ABC):
     @abstractmethod
-    async def publish(self, queue_name: str, message_body: str, priority: int):
+    async def publish(self, queue_name: str, message_body: str, priority: int) -> None:
         pass
 
     @abstractmethod
-    async def create_queue(self, queue_name: str):
+    async def create_queue(self, queue_name: str) -> None:
         pass
 
 
@@ -27,7 +23,7 @@ class BaseRabbitQueue(AbstractQueue):
     exchange: AbstractExchange
 
     @classmethod
-    async def init(cls, connection: AbstractConnection):
+    async def init(cls, connection: AbstractConnection) -> Self:
         self = cls()
         self.connection = connection
         self.channel = await self.connection.channel()
