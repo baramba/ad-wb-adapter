@@ -1,6 +1,4 @@
-from abc import ABC
 from typing import Any
-
 from adapters.campaign import CampaignAdapter
 from arq import ArqRedis
 from arq.jobs import Job
@@ -9,7 +7,7 @@ from dto.campaign import CreateCampaignDTO
 from utils import depends_decorator
 
 
-class TaskManager(ABC):
+class TaskManager:
     @staticmethod
     async def run_task(arq_poll: ArqRedis, *args: Any, **kwargs: Any) -> int:
         job: Job | None = await arq_poll.enqueue_job(*args, **kwargs)
