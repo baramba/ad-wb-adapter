@@ -2,7 +2,7 @@ import asyncio
 import collections
 import math
 
-from adapters.wb_http_client import BaseAdapter
+from adapters.wb_http_client import HTTPAdapter
 from exceptions.campaign import (
     CampaignCreateError,
     CampaignInitError,
@@ -11,7 +11,7 @@ from exceptions.campaign import (
 from httpx import HTTPStatusError
 
 
-class CampaignAdapter(BaseAdapter):
+class CampaignAdapter(HTTPAdapter):
     async def get_subject_id(self, nms: int) -> int:
         url: str = f"https://card.wb.ru/cards/detail?nm={nms}"
 

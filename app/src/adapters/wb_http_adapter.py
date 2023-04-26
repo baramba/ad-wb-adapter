@@ -7,28 +7,14 @@ from core.settings import logger
 
 
 class HTTPAdapter:
-    headers: dict
-    cookies: dict
-
     def __init__(
         self,
         client: httpx.AsyncClient,
-        user_id: str,
-        supplier_id: str,
-        supplier_id_external: str,
-        wb_token: str,
-        referer: str = "https://cmp.wildberries.ru",
     ):
+        self.ua: fk_ua.FakeUserAgent = fk_ua.UserAgent()
         self.client = client
         self.headers = {
-            "User-Agent": fk_ua.UserAgent()["google_chrome"],
-            "X-User-Id": user_id,
-            "Referer": referer,
-        }
-        self.cookies = {
-            "x-supplier-id": supplier_id,
-            "x-supplier-id-external": supplier_id_external,
-            "WBToken": wb_token,
+            "User-Agent": self.ua.random,
         }
         self.client.event_hooks = {
             "request": [self.log_request],

@@ -1,23 +1,13 @@
-from typing import Self
+from exceptions.base import WBACampaignError
 
 
-class CampaignError(Exception):
-    status_code: int
-
-    @classmethod
-    def init(cls, status_code: int, message: str) -> Self:
-        result = cls(message)
-        result.status_code = status_code
-        return result
-
-
-class CampaignCreateError(CampaignError):
+class CampaignCreateError(WBACampaignError):
     pass
 
 
-class CampaignInitError(CampaignError):
+class CampaignInitError(WBACampaignError):
     pass
 
 
-class CampaignStartError(CampaignError):
+class CampaignStartError(WBACampaignError):
     pass

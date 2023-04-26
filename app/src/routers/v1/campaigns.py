@@ -22,7 +22,7 @@ router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 )
 async def create_full_campaign(
     campaign: CreateCampaignDTO,
-    routing_key: Annotated[str, Header()],
+    routing_key: Annotated[str | None, Header()],
     arq: ArqRedis = Depends(get_arq),
 ) -> RequestQueuedResponse:
     job_id = uuid.uuid4()
