@@ -1,5 +1,5 @@
 version: '3.8'
-
+name: wba
 x-redis-cred:
   &redis-cred
   REDIS_HOST: ${REDIS_HOST}
@@ -19,7 +19,6 @@ x-rabbitmq-cred:
 
 x-app-cred:
   &app-cred
-  PROJECT_NAME: WILDBERRIES_ADAPTER
   X_USER_ID: ${X_USER_ID}
   X_SUPPLIER_ID: ${X_SUPPLIER_ID}
   X_SUPPLIER_ID_EXTERNAl: ${X_SUPPLIER_ID_EXTERNAl}
@@ -29,12 +28,12 @@ x-app-cred:
 
 services:
 
-  ad-wbadapter-redis:
-    container_name: ad-wbadapter-redis
+  ad-wba-redis:
+    container_name: ad-wba-redis
     image: redis:7.0
     environment: *redis-cred
     volumes:
-      - ad-wbadapter-redis-data:/data
+      - ad-wba-redis-data:/data
     restart: on-failure
     healthcheck:
       test: [ 'CMD', 'redis-cli' ]
@@ -44,15 +43,15 @@ services:
     networks:
       - ad-network
 
-  ad-rabbitmq:
-    container_name: ad-rabbitmq
+  ad-wba-rabbitmq:
+    container_name: ad-wba-rabbitmq
     image: rabbitmq:3.10.7-management
     environment: *rabbitmq-cred
-    ports:
+    expose:
       - "5672"
       - "15672"
     volumes:
-      - ad-rabbitmq-data:/var/lib/rabbitmq/
+      - ad-wba-rabbitmq-data:/var/lib/rabbitmq/
     healthcheck:
       test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
       interval: 3s
@@ -61,15 +60,15 @@ services:
     networks:
       - ad-network
 
-  ad-wbadapter:
-    container_name: ad-wbadapter
+  ad-wba:
+    container_name: ad-wba
     build: ./app
     environment: *app-cred
     restart: on-failure
     expose:
-      - 8001
+      - 8000
     depends_on:
-      ad-wbadapter-redis:
+      ad-wba-redis:
         condition: service_healthy
     networks:
       - ad-network
@@ -78,17 +77,17 @@ services:
     container_name: ad-wba-worker
     build: ./app
     environment: *app-cred
-    command: arq core.arq.WorkerSettings
+    command: poetry run arq core.arq.WorkerSettings
     restart: on-failure
     depends_on:
-      ad-wbadapter-redis:
+      ad-wba-redis:
         condition: service_healthy
     networks:
       - ad-network
 
 volumes:
-  ad-wbadapter-redis-data:
-  ad-rabbitmq-data:
+  ad-wba-redis-data:
+  ad-wba-rabbitmq-data:
 
 
 networks:

@@ -1,12 +1,13 @@
 import uuid
 from typing import Annotated
-
 from arq import ArqRedis
 from depends.arq import get_arq
 from dto.campaign import CreateCampaignDTO
 from fastapi import APIRouter, Depends, Header, status
 from schemas.v1.base import JobResult, RequestQueuedResponse
 from schemas.v1.campaign import CreateCampaignResponse
+from tasks.create_full_campaign import CampaignCreateFullTask
+
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
@@ -22,10 +23,17 @@ router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 )
 async def create_full_campaign(
     campaign: CreateCampaignDTO,
-    routing_key: Annotated[str | None, Header()],
+    user_id: Annotated[uuid.UUID, Header()],
+    routing_key: Annotated[str, Header()],
     arq: ArqRedis = Depends(get_arq),
 ) -> RequestQueuedResponse:
     job_id = uuid.uuid4()
 
-    await arq.enqueue_job("create_full_campaign", job_id, campaign, routing_key)
+    await arq.enqueue_job(
+        CampaignCreateFullTask.create_full_campaign.__qualname__,
+        job_id,
+        campaign,
+        routing_key,
+        user_id,
+    )
     return RequestQueuedResponse(job_id=job_id)

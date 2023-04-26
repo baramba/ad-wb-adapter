@@ -1,7 +1,7 @@
 import uuid
 
 from httpx import HTTPStatusError, Response
-from adapters.wb_http_adapter import HTTPAdapter
+from adapters.http_adapter import HTTPAdapter
 from exceptions.supplier import SupplierWBTokenError
 from schemas.v1.base import ResponseStatus
 

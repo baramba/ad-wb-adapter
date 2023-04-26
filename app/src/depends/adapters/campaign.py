@@ -1,13 +1,8 @@
 from adapters.campaign import CampaignAdapter
-from core.settings import settings
-from depends.httpx_client import get_http_client
+from depends.adapters.http_adapter import get_http_adapter
 
 
 async def get_campaign_adapter() -> CampaignAdapter:
     return CampaignAdapter(
-        client=await get_http_client(),
-        supplier_id=settings.WILDBERRIES.X_SUPPLIER_ID,
-        supplier_id_external=settings.WILDBERRIES.X_SUPPLIER_ID_EXTERNAl,
-        user_id=settings.WILDBERRIES.X_USER_ID,
-        wb_token=settings.WILDBERRIES.WB_TOKEN,
+        client=await get_http_adapter(),
     )

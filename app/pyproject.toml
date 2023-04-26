@@ -17,6 +17,7 @@ uvicorn = "0.21.0"
 uvloop = "0.17.0"
 aio-pika = "9.0.5"
 orjson="3.8.10"
+backoff = "^2.2.1"
 
 
 [tool.poetry.group.dev.dependencies]
