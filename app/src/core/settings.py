@@ -1,7 +1,7 @@
 import logging
 from logging.config import dictConfig
 from pathlib import Path
-from pydantic import BaseSettings
+from pydantic import AnyHttpUrl, BaseSettings, Field
 from core.logger import logging_conf
 
 
@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     WILDBERRIES: Wildberries = Wildberries()
     LOG_LEVEL: str = "INFO"
     BASE_DIR = Path(__file__).absolute().parent.parent
+    TOKEN_MANAGER_URL: AnyHttpUrl = Field(default="http://token_manager:8888")
 
 
 settings = Settings()

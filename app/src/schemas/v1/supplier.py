@@ -1,6 +1,8 @@
 from typing import Generic, TypeVar
 import uuid
 
+from pydantic import UUID4
+
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import BaseResponse, ResponseCode, ResponseStatus
 
@@ -32,3 +34,9 @@ class WBTokenSuccessResponse(WBTokenResponse):
 class WBTokenErrorResponse(WBTokenResponse):
     status: ResponseStatus = ResponseStatus.ERROR
     status_code: int = ResponseCode.OK
+
+
+class WbUserAuthData(BaseOrjsonModel):
+    wb_user_id: int
+    wb_supplier_id: UUID4
+    wb_token_access: str

@@ -1,5 +1,5 @@
 version: '3.8'
-
+name: wba
 x-redis-cred:
   &redis-cred
   REDIS_HOST: ${REDIS_HOST}
@@ -19,7 +19,6 @@ x-rabbitmq-cred:
 
 x-app-cred:
   &app-cred
-  PROJECT_NAME: wb-adapter
   X_USER_ID: ${X_USER_ID}
   X_SUPPLIER_ID: ${X_SUPPLIER_ID}
   X_SUPPLIER_ID_EXTERNAl: ${X_SUPPLIER_ID_EXTERNAl}
@@ -29,56 +28,69 @@ x-app-cred:
 
 services:
 
-  redis:
+  ad-wba-redis:
+    container_name: ad-wba-redis
     image: redis:7.0
     environment: *redis-cred
     volumes:
-      - redis_volume:/data
+      - ad-wba-redis-data:/data
     restart: on-failure
     healthcheck:
       test: [ 'CMD', 'redis-cli' ]
       interval: 3s
       timeout: 5s
       retries: 3
+    networks:
+      - ad-network
 
-  rabbitmq:
+  ad-wba-rabbitmq:
+    container_name: ad-wba-rabbitmq
     image: rabbitmq:3.10.7-management
     environment: *rabbitmq-cred
-    hostname: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+    expose:
+      - "5672"
+      - "15672"
     volumes:
-      - rabbitmq_volume:/var/lib/rabbitmq/
+      - ad-wba-rabbitmq-data:/var/lib/rabbitmq/
     healthcheck:
       test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping" ]
       interval: 3s
       timeout: 5s
       retries: 3
+    networks:
+      - ad-network
 
-  app:
+  ad-wba:
+    container_name: ad-wba
     build: ./app
     environment: *app-cred
     restart: on-failure
-    ports:
-      - "8080:8000"
+    expose:
+      - 8000
     depends_on:
-      redis:
+      ad-wba-redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+    networks:
+      - ad-network
 
-  worker:
+  ad-wba-worker:
+    container_name: ad-wba-worker
     build: ./app
     environment: *app-cred
-    command: arq core.arq.WorkerSettings
+    command: poetry run arq core.arq.WorkerSettings
     restart: on-failure
     depends_on:
-      redis:
+      ad-wba-redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+    networks:
+      - ad-network
 
 volumes:
-  redis_volume:
-  rabbitmq_volume:
+  ad-wba-redis-data:
+  ad-wba-rabbitmq-data:
+
+
+networks:
+  ad-network:
+    name: ad-network
+    external: true
