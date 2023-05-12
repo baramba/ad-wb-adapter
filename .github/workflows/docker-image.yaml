@@ -1,12 +1,14 @@
 name: Docker Image CI
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+
+  # push:
+  #   branches: ["main"]
+  # pull_request:
+  #   branches: ["main"]
   workflow_dispatch:
 jobs:
-  docker:
+  create-docker-image:
+
     runs-on: ubuntu-latest
     env:
       WORKDIR: app
@@ -29,7 +31,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: ${{ env.WORKDIR }}
           push: true
           tags: |
-            ${{ env.OCI_REGISTRY }}/ad/frontend:latest
+            ${{ env.OCI_REGISTRY }}/ad/wbadapter:latest
+
