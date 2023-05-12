@@ -1,5 +1,6 @@
 name: Docker Image CI
 on:
+
   # push:
   #   branches: ["main"]
   # pull_request:
@@ -7,6 +8,7 @@ on:
   workflow_dispatch:
 jobs:
   create-docker-image:
+
     runs-on: ubuntu-latest
     env:
       WORKDIR: app
@@ -33,3 +35,4 @@ jobs:
           push: true
           tags: |
             ${{ env.OCI_REGISTRY }}/ad/wbadapter:latest
+
