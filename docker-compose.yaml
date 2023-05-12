@@ -1,37 +1,11 @@
 version: '3.8'
 name: wba
-x-redis-cred:
-  &redis-cred
-  REDIS_HOST: ${REDIS_HOST}
-  REDIS_PORT: ${REDIS_PORT}
-  REDIS_PASSWORD: ${REDIS_PASSWORD}
-
-x-rabbitmq-cred:
-  &rabbitmq-cred
-  RABBITMQ_HOST: ${RABBITMQ_HOST}
-  RABBITMQ_PORT: ${RABBITMQ_PORT}
-  RABBITMQ_LOGIN: ${RABBITMQ_LOGIN}
-  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
-  RABBITMQ_EXCHANGE: ${RABBITMQ_EXCHANGE}
-  RABBITMQ_SENDER_KEY: ${RABBITMQ_SENDER_KEY}
-  RABBITMQ_DEFAULT_USER: ${RABBITMQ_LOGIN}
-  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-
-x-app-cred:
-  &app-cred
-  X_USER_ID: ${X_USER_ID}
-  X_SUPPLIER_ID: ${X_SUPPLIER_ID}
-  X_SUPPLIER_ID_EXTERNAl: ${X_SUPPLIER_ID_EXTERNAl}
-  WB_TOKEN: ${WB_TOKEN}
-  <<: *redis-cred
-  <<: *rabbitmq-cred
-
 services:
-
   ad-wba-redis:
     container_name: ad-wba-redis
     image: redis:7.0
-    environment: *redis-cred
+    env_file:
+      - .env
     volumes:
       - ad-wba-redis-data:/data
     restart: on-failure
@@ -45,8 +19,10 @@ services:
 
   ad-wba-rabbitmq:
     container_name: ad-wba-rabbitmq
-    image: rabbitmq:3.10.7-management
-    environment: *rabbitmq-cred
+    image: rabbitmq:3.11.15-management
+    hostname: ad-wba-rabbitmq
+    env_file:
+      - .env
     expose:
       - "5672"
       - "15672"
@@ -63,7 +39,8 @@ services:
   ad-wba:
     container_name: ad-wba
     build: ./app
-    environment: *app-cred
+    env_file:
+      - .env
     restart: on-failure
     expose:
       - 8000
@@ -76,7 +53,8 @@ services:
   ad-wba-worker:
     container_name: ad-wba-worker
     build: ./app
-    environment: *app-cred
+    env_file:
+      - .env
     command: poetry run arq core.arq.WorkerSettings
     restart: on-failure
     depends_on:

@@ -1,8 +1,12 @@
-name: code-quality-check
-
-on: [push, pull_request]
+name: Code quality checks
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
 jobs:
-  build:
+  code-checks:
     runs-on: ubuntu-latest
     env:
       WORKDIR: app
