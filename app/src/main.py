@@ -24,7 +24,7 @@ async def shutdown() -> None:
     await sd.shutdown()
 
 
-@app.get("/", tags=["about"])
+@app.get("/about", tags=["about"])
 async def root() -> dict[str, dict]:
     return {
         "message": {
