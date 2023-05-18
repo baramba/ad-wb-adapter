@@ -48,4 +48,4 @@ async def auth_wb_user(
                 description="Ошибка при получении wb_token_access.",
             ).dict(),
         )
-    return WBTokenSuccessResponse(body=WBToken(wb_token=wb_token_access))
+    return WBTokenSuccessResponse(body=WBToken(wb_token_access=wb_token_access))
