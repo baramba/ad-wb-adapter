@@ -16,7 +16,7 @@ class WBTokenRequest(BaseOrjsonModel):
 
 
 class WBToken(BaseOrjsonModel):
-    wb_token: str
+    wb_token_access: str
 
 
 class WBTokenResponse(BaseResponse, Generic[T]):
