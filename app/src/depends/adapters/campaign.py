@@ -1,4 +1,4 @@
-from adapters.campaign import CampaignAdapter
+from adapters.wb.campaign import CampaignAdapter
 from depends.adapters.http_adapter import get_http_adapter
 
 

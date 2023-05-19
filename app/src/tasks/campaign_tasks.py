@@ -1,5 +1,5 @@
 from typing import Any
-from adapters.campaign import CampaignAdapter
+from adapters.wb.campaign import CampaignAdapter
 from arq import ArqRedis
 from arq.jobs import Job
 from depends.adapters.campaign import get_campaign_adapter

@@ -17,11 +17,10 @@ class WBAError(Exception):
     def __init__(
         self,
         *args: object,
-        status: ResponseStatus,
         status_code: int,
         description: str | None = None,
     ) -> None:
         super().__init__(*args)
-        self.status = status
+        self.status = ResponseStatus.ERROR
         self.status_code = status_code
         self.description = description

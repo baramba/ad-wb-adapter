@@ -5,6 +5,8 @@ import fake_useragent as fk_ua
 import httpx
 from core.settings import logger
 
+from urllib.parse import unquote
+
 
 class HTTPAdapter:
     def __init__(
@@ -35,7 +37,7 @@ class HTTPAdapter:
         logger.info(
             "{0}: {1}, data: {2}".format(
                 request.method,
-                request.url,
+                unquote(str(request.url)),
                 self.cut_string(str(content), 75),
             )
         )
@@ -46,7 +48,7 @@ class HTTPAdapter:
         logger.info(
             "{0}: {1}, {2}, data: {3}".format(
                 request.method,
-                request.url,
+                unquote(str(request.url)),
                 response.status_code,
                 self.cut_string(str(content), 75),
             )
@@ -95,11 +97,9 @@ class HTTPAdapter:
         cookies: dict | None = None,
         params: dict | None = None,
     ) -> httpx.Response:
-        headers = dict() if headers is None else headers
-        cookies = dict() if cookies is None else cookies
-        params = dict() if params is None else params
         headers = headers or self.headers
-        cookies = cookies or self.headers
+        cookies = cookies or self.cookies
+        params = dict() or params
         response: httpx.Response = await self.client.get(
             url=url,
             headers=headers,

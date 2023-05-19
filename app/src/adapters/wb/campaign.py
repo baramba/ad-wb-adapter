@@ -1,12 +1,12 @@
 import asyncio
 import collections
-import inspect
 import math
 from typing import Any
 import backoff
 
 from adapters.http_adapter import HTTPAdapter
-from exceptions.base import WBACampaignError
+from dto.campaign import CampaignConfigDTO
+from exceptions.base import WBACampaignError, WBAError
 from exceptions.campaign import (
     CampaignCreateError,
     CampaignInitError,
@@ -14,32 +14,24 @@ from exceptions.campaign import (
 )
 from httpx import HTTPStatusError
 
-from schemas.v1.supplier import WbUserAuthData
+from dto.supplier import WbUserAuthDataDTO
 
 
 class CampaignAdapter:
     def __init__(self, client: HTTPAdapter) -> None:
         self.client: HTTPAdapter = client
-        self._auth_data: WbUserAuthData | None = None
-
-    async def get_auth_data(self, attr_name: str) -> Any:
-        attr: Any = getattr(self._auth_data, attr_name)
-        return attr
+        self._auth_data: WbUserAuthDataDTO | None = None
 
     @property
-    async def auth_data(self) -> WbUserAuthData | None:
+    def auth_data(self) -> WbUserAuthDataDTO | None:
         return self._auth_data
 
     @auth_data.setter
-    async def auth_data(self, value: WbUserAuthData) -> None:
-        self.client.headers["X-User-Id"] = await self.get_auth_data("wb_user_id")
-        cookies = {
-            "x-supplier-id-external": await self.get_auth_data("wb_supplier_id"),
-            "WBToken": await self.get_auth_data("wb_token_access"),
-        }
-        self.client.headers.update(cookies)
-
-        self._auth_data = value
+    def auth_data(self, auth_data: WbUserAuthDataDTO) -> None:
+        self._auth_data = auth_data
+        self.client.headers["X-User-Id"] = self._auth_data.wb_user_id
+        self.client.cookies["x-supplier-id-external"] = self._auth_data.wb_supplier_id
+        self.client.cookies["WBToken"] = self._auth_data.wb_token_access
 
     async def get_subject_id(self, nms: int) -> int:
         url: str = f"https://card.wb.ru/cards/detail?nm={nms}"
@@ -252,7 +244,7 @@ class CampaignAdapter:
         exception=WBACampaignError,
         max_tries=5,
     )
-    async def get_campaign_config(self, id: int) -> dict:
+    async def get_campaign_config(self, id: int) -> CampaignConfigDTO:
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
         headers = {
             "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
@@ -266,7 +258,7 @@ class CampaignAdapter:
                 e.response.status_code, "Ошибка при получении конфигурации кампании."
             )
 
-        return dict(result.json())
+        return CampaignConfigDTO.parse_obj(result.json())
 
     @backoff.on_exception(
         wait_gen=backoff.expo,
@@ -289,14 +281,14 @@ class CampaignAdapter:
         }
         headers.update(self.client.headers)
         budget: int = await self.get_campaign_budget(id=id)
-        config: dict = await self.get_campaign_config(id=id)
-        config["budget"]["total"] = budget
+        config: CampaignConfigDTO = await self.get_campaign_config(id=id)
+        config.budget.total = budget
         # Задержка, чтобы избежать - too many requests (429)
         await asyncio.sleep(1)
         try:
             result = await self.client._put(
                 url=url,
-                body=config,
+                body=config.dict(),
                 headers=headers,
             )
             result.raise_for_status()
@@ -305,10 +297,44 @@ class CampaignAdapter:
                 e.response.status_code, "Ошибка при запуске кампании."
             )
 
+    @backoff.on_exception(
+        wait_gen=backoff.expo,
+        exception=WBACampaignError,
+        max_tries=5,
+    )
+    async def update_campaign_config(self, config: CampaignConfigDTO) -> None:
+        """Обновляет конфигурации кампании.
+
+        Arguments:
+            config -- новое конфигурация кампании.
+        """
+
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
+
+        headers = {
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}"
+        }
+        headers.update(self.client.headers)
+
+        try:
+            result = await self.client._put(
+                url=url,
+                body=config.dict(),
+                headers=headers,
+            )
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description="Ошибка при обновлении конфигурации кампании.",
+            )
+
     def __getattribute__(self, name: str) -> Any | None:
         #  Проверяем, что _auth_data is not None.
-        att = getattr(self._obj, name)
-        if hasattr(self._obj, name) and inspect.ismethod(att):
-            if self._auth_data is None:
-                raise ValueError("Значние атрибута auth_data = None.")
-        return att
+        attr = super().__getattribute__(name)
+        if callable(attr) and super().__getattribute__("_auth_data") is None:
+            raise ValueError(
+                "Значние атрибута CampaignAdapter.auth_data = None. Для корректной работы адаптера установите \
+                авторизационные данные."
+            )
+        return super().__getattribute__(name)

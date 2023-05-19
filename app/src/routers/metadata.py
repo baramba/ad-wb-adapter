@@ -12,6 +12,10 @@ tags = [
         "description": "методы для работы с данными пользователей wildberries.",
     },
     {
+        "name": "stake",
+        "description": "методы для работы со ставками.",
+    },
+    {
         "name": "about",
         "description": "Информация о сервисе.",
     },

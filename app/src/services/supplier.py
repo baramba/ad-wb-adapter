@@ -1,6 +1,6 @@
 import uuid
 from fastapi import Depends
-from adapters.supplier import SupplierAdapter
+from adapters.wb.supplier import SupplierAdapter
 from depends.adapters.supplier import get_supplier_adapter
 
 
