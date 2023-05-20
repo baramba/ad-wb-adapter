@@ -1,5 +1,4 @@
 import uuid
-import traceback
 from fastapi import Depends, status
 from fastapi.responses import Response
 from fastapi.routing import APIRouter
@@ -54,7 +53,7 @@ async def actual_stakes(
     if stakes.adverts is None:
         return ORJSONResponse(content=BaseResponseEmpty().dict())
 
-    return ORJSONResponse(content=StakeResponse(payload=stakes).dict())
+    return ORJSONResponse(content=StakeResponse(payload=stakes).dict(by_alias=True))
 
 
 @router.get(

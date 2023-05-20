@@ -29,18 +29,26 @@ class CampaignAdapter:
     @auth_data.setter
     def auth_data(self, auth_data: WbUserAuthDataDTO) -> None:
         self._auth_data = auth_data
-        self.client.headers["X-User-Id"] = self._auth_data.wb_user_id
-        self.client.cookies["x-supplier-id-external"] = self._auth_data.wb_supplier_id
-        self.client.cookies["WBToken"] = self._auth_data.wb_token_access
+        self.client.headers["X-User-Id"] = str(self._auth_data.wb_user_id)
+        self.client.cookies["x-supplier-id-external"] = str(
+            self._auth_data.wb_supplier_id
+        )
+        self.client.cookies["WBToken"] = str(self._auth_data.wb_token_access)
 
+    @backoff.on_exception(
+        wait_gen=backoff.expo,
+        exception=WBACampaignError,
+        max_tries=5,
+    )
     async def get_subject_id(self, nms: int) -> int:
-        url: str = f"https://card.wb.ru/cards/detail?nm={nms}"
+        url: str = "https://card.wb.ru/cards/detail"
 
+        params = {"nm": nms}
         headers = {"Referer": "https://cmp.wildberries.ru/campaigns/create/search"}
         headers.update(self.client.headers)
 
         try:
-            result = await self.client._get(url=url, headers=headers)
+            result = await self.client._get(url=url, headers=headers, params=params)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise CampaignCreateError.init(
@@ -49,6 +57,11 @@ class CampaignAdapter:
         subject_id: int = result.json()["data"]["products"][0]["subjectId"]
         return subject_id
 
+    @backoff.on_exception(
+        wait_gen=backoff.expo,
+        exception=WBACampaignError,
+        max_tries=5,
+    )
     async def get_category(self, nms: int) -> str:
         subject_id: int = await self.get_subject_id(nms=nms)
 
@@ -107,7 +120,9 @@ class CampaignAdapter:
         headers.update(self.client.headers)
         try:
             result = await self.client._post(
-                url=url, body=body, headers=self._headers, cookies=self._cookies
+                url=url,
+                body=body,
+                headers=headers,
             )
             result.raise_for_status()
         except HTTPStatusError as e:

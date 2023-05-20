@@ -62,7 +62,7 @@ class HTTPAdapter:
         body: dict | None = None,
     ) -> httpx.Response:
         headers = headers or self.headers
-        cookies = cookies or self.headers
+        cookies = cookies or self.cookies
         response: httpx.Response = await self.client.post(
             url=url,
             headers=headers,
@@ -80,7 +80,7 @@ class HTTPAdapter:
         body: dict | None = None,
     ) -> httpx.Response:
         headers = headers or self.headers
-        cookies = cookies or self.headers
+        cookies = cookies or self.cookies
 
         response: httpx.Response = await self.client.put(
             url=url,
