@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from pydantic import Field
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import (
@@ -46,3 +47,17 @@ class Organic(BaseOrjsonModel):
 
 class OrganicResponse(BaseResponseSuccess):
     payload: Organic
+
+
+class OperationStatus(int, Enum):
+    UPDATED = auto()
+    NOT_MODIFIED = auto()
+    NOT_UPDATED = auto()
+
+
+class UpdateCampaignStatus(BaseOrjsonModel):
+    status: OperationStatus
+
+
+class UpdateCampaignResponse(BaseResponseSuccess):
+    payload: UpdateCampaignStatus

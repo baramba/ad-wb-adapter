@@ -49,10 +49,10 @@ class BaseResponseEmpty(BaseResponse):
 
 class BaseResponseError(BaseResponse):
     status: ResponseStatus = ResponseStatus.ERROR
-    status_code: ResponseCode = ResponseCode.ERROR
+    status_code: int = ResponseCode.ERROR
     description = "Произошла непредвиденная ошибка. Обратитесь к администратору."
 
 
 class BaseResponseSuccess(BaseResponse):
     status: ResponseStatus = ResponseStatus.OK
-    status_code: ResponseCode = ResponseCode.OK
+    status_code: int = ResponseCode.OK

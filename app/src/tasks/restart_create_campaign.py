@@ -7,7 +7,7 @@ from depends.adapters.campaign import get_campaign_adapter
 from depends.adapters.token import get_token_manager_adapter
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
-from dto.campaign import CreateCampaignDTO
+from dto.campaign import CampaignCreateDTO
 from dto.job_result import RabbitJobResult
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
@@ -28,7 +28,7 @@ class CampaignCreateFullTask:
         cls,
         ctx: dict,
         job_id: uuid.UUID,
-        campaign: CreateCampaignDTO,
+        campaign: CampaignCreateDTO,
         routing_key: str,
         user_id: uuid.UUID,
         redis: Redis,

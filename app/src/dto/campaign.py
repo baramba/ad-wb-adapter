@@ -1,13 +1,13 @@
-import enum
+from enum import Enum
 from uuid import UUID
 from schemas.common import BaseOrjsonModel
 
 
-class CampaignTypeEnum(str, enum.Enum):
+class CampaignTypeEnum(str, Enum):
     search = "search"
 
 
-class CreateCampaignDTO(BaseOrjsonModel):
+class CampaignCreateDTO(BaseOrjsonModel):
     name: str
     source_id: UUID
     nms: list[int]
@@ -30,6 +30,11 @@ class Place(BaseOrjsonModel):
 class Budget(BaseOrjsonModel):
     total: int
     dailyMax: int
+
+
+class CampaignStatus(int, Enum):
+    STARTED = 9
+    PAUSED = 11
 
 
 class CampaignConfigDTO(BaseOrjsonModel):

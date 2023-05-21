@@ -6,8 +6,9 @@ from adapters.wb.stake import StakeAdapter
 from depends.adapters.campaign import get_campaign_adapter
 from depends.adapters.stake import get_stake_adapter
 from depends.adapters.token import get_token_manager_adapter
-from dto.campaign import CampaignConfigDTO
+from dto.campaign import CampaignConfigDTO, CampaignStatus
 from dto.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
+from schemas.v1.stake import OperationStatus
 
 
 class StakeService:
@@ -50,16 +51,51 @@ class StakeService:
         rate: int,
         user_id: uuid.UUID,
     ) -> bool:
-        self.campaign_adapter.auth_data = (
-            await self.token_manager.auth_data_by_user_id_old(user_id)
+        self.campaign_adapter.auth_data = await self.token_manager.auth_data_by_user_id(
+            user_id
         )
         config: CampaignConfigDTO = await self.campaign_adapter.get_campaign_config(
             id=wb_campaign_id
         )
         config.place[0].price = rate
 
-        await self.campaign_adapter.update_campaign_config(config=config)
+        await self.campaign_adapter.update_campaign_rate(
+            id=wb_campaign_id, config=config
+        )
         return True
+
+    async def pause_campaign(
+        self,
+        wb_campaign_id: int,
+        user_id: uuid.UUID,
+    ) -> CampaignStatus:
+        self.campaign_adapter.auth_data = await self.token_manager.auth_data_by_user_id(
+            user_id
+        )
+
+        return await self.campaign_adapter.pause_campaign(id=wb_campaign_id)
+
+    async def resume_campaign(
+        self,
+        wb_campaign_id: int,
+        user_id: uuid.UUID,
+    ) -> OperationStatus:
+        self.campaign_adapter.auth_data = await self.token_manager.auth_data_by_user_id(
+            user_id
+        )
+        config: CampaignConfigDTO = await self.campaign_adapter.get_campaign_config(
+            id=wb_campaign_id
+        )
+        # если config.budget.total, то wb возвращает ошибку "Для запуска/возобновления показов пополните бюджет кампании"
+        config.budget.total = 100
+        if config.status == CampaignStatus.STARTED:
+            return OperationStatus.NOT_MODIFIED
+
+        config.status = CampaignStatus.STARTED
+        await self.campaign_adapter.update_campaign_config(
+            id=wb_campaign_id, config=config
+        )
+        return OperationStatus.UPDATED
 
 
 async def get_stake_service(

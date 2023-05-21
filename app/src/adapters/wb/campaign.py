@@ -5,7 +5,7 @@ from typing import Any
 import backoff
 
 from adapters.http_adapter import HTTPAdapter
-from dto.campaign import CampaignConfigDTO
+from dto.campaign import CampaignConfigDTO, CampaignStatus
 from exceptions.base import WBACampaignError, WBAError
 from exceptions.campaign import (
     CampaignCreateError,
@@ -36,9 +36,7 @@ class CampaignAdapter:
         self.client.cookies["WBToken"] = str(self._auth_data.wb_token_access)
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def get_subject_id(self, nms: int) -> int:
         url: str = "https://card.wb.ru/cards/detail"
@@ -58,9 +56,7 @@ class CampaignAdapter:
         return subject_id
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def get_category(self, nms: int) -> str:
         subject_id: int = await self.get_subject_id(nms=nms)
@@ -96,9 +92,7 @@ class CampaignAdapter:
         return category
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def create_campaign(
         self,
@@ -133,15 +127,13 @@ class CampaignAdapter:
         return int(result.json()["id"])
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def get_campaign_budget(
         self,
         id: int,
     ) -> int:
-        """Получает текущий размер бюджета рекламной кампании."""
+        """Возвращает текущий размер бюджета рекламной кампании."""
 
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget"
         headers = {
@@ -159,9 +151,7 @@ class CampaignAdapter:
         return int(result.json()["total"])
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def add_keywords_to_campaign(
         self,
@@ -186,9 +176,7 @@ class CampaignAdapter:
             )
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def switch_on_fixed_list(
         self,
@@ -212,9 +200,7 @@ class CampaignAdapter:
             )
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def replenish_budget(
         self,
@@ -255,11 +241,10 @@ class CampaignAdapter:
             )
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def get_campaign_config(self, id: int) -> CampaignConfigDTO:
+        """Возвращает текущию конфигурацию компании."""
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
         headers = {
             "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
@@ -276,9 +261,7 @@ class CampaignAdapter:
         return CampaignConfigDTO.parse_obj(result.json())
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
     async def start_campaign(self, id: int) -> None:
         """Запускает рекламную кампанию.
@@ -295,11 +278,12 @@ class CampaignAdapter:
             "Referer": f"https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}"
         }
         headers.update(self.client.headers)
-        budget: int = await self.get_campaign_budget(id=id)
+        budget_amount: int = await self.get_campaign_budget(id=id)
+        await asyncio.sleep(0.5)
         config: CampaignConfigDTO = await self.get_campaign_config(id=id)
-        config.budget.total = budget
+        config.budget.total = budget_amount
         # Задержка, чтобы избежать - too many requests (429)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.5)
         try:
             result = await self.client._put(
                 url=url,
@@ -313,12 +297,10 @@ class CampaignAdapter:
             )
 
     @backoff.on_exception(
-        wait_gen=backoff.expo,
-        exception=WBACampaignError,
-        max_tries=5,
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
     )
-    async def update_campaign_config(self, config: CampaignConfigDTO) -> None:
-        """Обновляет конфигурации кампании.
+    async def update_campaign_config(self, id: int, config: CampaignConfigDTO) -> None:
+        """Обновляет конфигурацию кампании.
 
         Arguments:
             config -- новое конфигурация кампании.
@@ -343,6 +325,68 @@ class CampaignAdapter:
                 status_code=e.response.status_code,
                 description="Ошибка при обновлении конфигурации кампании.",
             )
+
+    @backoff.on_exception(
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
+    )
+    async def update_campaign_rate(self, id: int, config: CampaignConfigDTO) -> None:
+        """Устанавливает новое значение ставки рекламной кампании.
+
+        Arguments:
+            config -- новое конфигурация кампании.
+        """
+
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/save"
+
+        headers = {
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}"
+        }
+        headers.update(self.client.headers)
+
+        try:
+            result = await self.client._put(
+                url=url,
+                body=config.dict(),
+                headers=headers,
+            )
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description="Ошибка при обновлении размера ставки на торгах.",
+            )
+
+    @backoff.on_exception(
+        wait_gen=backoff.expo, exception=WBACampaignError, max_tries=5
+    )
+    async def pause_campaign(self, id: int) -> CampaignStatus:
+        """Ставит рекламную кампанию на паузу.
+
+        Arguments:
+            id -- идентификатор кампании
+
+        Raises:
+            WBAError: в случае получения ошибки от wildberries
+        """
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/pause"
+
+        headers = {
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"
+        }
+        headers.update(self.client.headers)
+
+        try:
+            result = await self.client._get(
+                url=url,
+                headers=headers,
+            )
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description=f"Ошибка при постановке кампании на паузу. wb_campaign_id={id}",
+            )
+        return CampaignStatus.PAUSED
 
     def __getattribute__(self, name: str) -> Any | None:
         #  Проверяем, что _auth_data is not None.

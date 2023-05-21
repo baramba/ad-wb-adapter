@@ -3,7 +3,7 @@ from adapters.wb.campaign import CampaignAdapter
 from arq import ArqRedis
 from arq.jobs import Job
 from depends.adapters.campaign import get_campaign_adapter
-from dto.campaign import CreateCampaignDTO
+from dto.campaign import CampaignCreateDTO
 from utils import depends_decorator
 
 
@@ -19,7 +19,7 @@ class TaskManager:
 class CampaignTaskManager(TaskManager):
     @classmethod
     async def create_campaign(
-        cls, arq_poll: ArqRedis, campaign: CreateCampaignDTO
+        cls, arq_poll: ArqRedis, campaign: CampaignCreateDTO
     ) -> int:
         wb_campaign_id: int = await cls.run_task(
             arq_poll, CampaignTasks.create_campaign.__qualname__, campaign
@@ -73,7 +73,7 @@ class CampaignTasks:
         campaign_adapter=get_campaign_adapter,
     )
     async def create_campaign(
-        ctx: dict, campaign: CreateCampaignDTO, campaign_adapter: CampaignAdapter
+        ctx: dict, campaign: CampaignCreateDTO, campaign_adapter: CampaignAdapter
     ) -> int:
         """Создает рекламную кампанию."""
         campaign_id: int = await campaign_adapter.create_campaign(

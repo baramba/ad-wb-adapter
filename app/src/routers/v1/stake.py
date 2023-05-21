@@ -122,7 +122,7 @@ async def organic_by_region(
 
 
 @router.put(
-    path="",
+    path="/rate",
     responses={
         status.HTTP_200_OK: {"model": BaseResponseSuccess},
     },
@@ -146,11 +146,77 @@ async def set_new_rate(
         logger.exception(e)
         return ORJSONResponse(
             content=BaseResponseError(
-                description="Ошибка при установке нового значения ставки на торгах."
+                description=f"Ошибка при установке нового значения ставки на торгах. wb_campaign_id={wb_campaign_id}"
             ).dict()
         )
     return ORJSONResponse(
         content=BaseResponseSuccess(
-            description="Установлено новое значение ставки на торгах."
+            description=f"Установлено новое значение ставки на торгах. wb_campaign_id={wb_campaign_id}"
+        ).dict()
+    )
+
+
+@router.put(
+    path="/pause",
+    responses={
+        status.HTTP_200_OK: {"model": BaseResponseSuccess},
+    },
+    summary="Метод для постановки кампании на паузу.",
+    description="Метод позволяет поставить кампанию на паузу.",
+)
+async def pause_campaign(
+    wb_campaign_id: int,
+    user_id: uuid.UUID,
+    stake_service: StakeService = Depends(get_stake_service),
+) -> Response:
+    try:
+        await stake_service.pause_campaign(
+            wb_campaign_id=wb_campaign_id, user_id=user_id
+        )
+    except WBAError as e:
+        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
+    except Exception as e:
+        logger.exception(e)
+        return ORJSONResponse(
+            content=BaseResponseError(
+                description=f"Ошибка при постановке кампании на паузу. wb_campaign_id={wb_campaign_id}"
+            ).dict()
+        )
+    return ORJSONResponse(
+        content=BaseResponseSuccess(
+            description=f"Кампания поставлена на паузу. wb_campaign_id={wb_campaign_id}"
+        ).dict()
+    )
+
+
+@router.put(
+    path="/resume",
+    responses={
+        status.HTTP_200_OK: {"model": BaseResponseSuccess},
+    },
+    summary="Метод для возобновления работы рекламной кампании.",
+    description="Метод позволяет возобновить работу рекламной кампании.",
+)
+async def resume_campaign(
+    wb_campaign_id: int,
+    user_id: uuid.UUID,
+    stake_service: StakeService = Depends(get_stake_service),
+) -> Response:
+    try:
+        await stake_service.resume_campaign(
+            wb_campaign_id=wb_campaign_id, user_id=user_id
+        )
+    except WBAError as e:
+        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
+    except Exception as e:
+        logger.exception(e)
+        return ORJSONResponse(
+            content=BaseResponseError(
+                description=f"Ошибка при постановке кампании на паузу. wb_campaign_id={wb_campaign_id}"
+            ).dict()
+        )
+    return ORJSONResponse(
+        content=BaseResponseSuccess(
+            description=f"Кампания поставлена на паузу. wb_campaign_id={wb_campaign_id}"
         ).dict()
     )

@@ -34,23 +34,23 @@ class HTTPAdapter:
         with contextlib.suppress(ValueError):
             content = json.loads(content)
 
-        logger.info(
+        logger.debug(
             "{0}: {1}, data: {2}".format(
                 request.method,
                 unquote(str(request.url)),
-                self.cut_string(str(content), 75),
+                str(content),
             )
         )
 
     async def log_response(self, response: httpx.Response) -> None:
         request = response.request
         content: str = (await response.aread()).decode("utf-8")
-        logger.info(
+        logger.debug(
             "{0}: {1}, {2}, data: {3}".format(
                 request.method,
                 unquote(str(request.url)),
                 response.status_code,
-                self.cut_string(str(content), 75),
+                str(content),
             )
         )
 
