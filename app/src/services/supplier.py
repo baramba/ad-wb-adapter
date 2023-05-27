@@ -13,9 +13,10 @@ class SupplierService:
         wb_token_refresh: str,
         wb_x_supplier_id_external: uuid.UUID,
     ) -> str:
-        return await self.supplier_adapter.wb_user_auth(
+        wb_token_access: str = await self.supplier_adapter.wb_user_auth(
             wb_token_refresh, wb_x_supplier_id_external
         )
+        return wb_token_access
 
 
 async def get_supplier_service(

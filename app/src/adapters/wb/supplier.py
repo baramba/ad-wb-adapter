@@ -3,6 +3,7 @@ import uuid
 from httpx import HTTPStatusError, Response
 from adapters.http_adapter import HTTPAdapter
 from exceptions.base import WBAError
+from schemas.v1.base import ResponseCode
 
 
 class SupplierAdapter(HTTPAdapter):
@@ -17,7 +18,7 @@ class SupplierAdapter(HTTPAdapter):
         self.wb_token_refresh = wb_token_refresh
         self.wb_x_supplier_id_external: str = str(wb_x_supplier_id_external)
         token = await self._wb_grant()
-        wb_token_access = await self._wb_login(token)
+        wb_token_access: str = await self._wb_login(token)
         await self._wb_introspect(wb_token_access=wb_token_access)
         return wb_token_access
 
@@ -63,7 +64,13 @@ class SupplierAdapter(HTTPAdapter):
                 status_code=e.response.status_code,
                 description="Ошибка при получении(wb_login) WBToken.",
             )
-        wb_token_access = str(result.cookies["WBToken"])
+        try:
+            wb_token_access: str = str(result.cookies["WBToken"])
+        except KeyError:
+            raise WBAError(
+                status_code=ResponseCode.ERROR,
+                description="Ошибка при получении(wb_login) WBToken. Не удалось прочитать cookies=WBToken.",
+            )
         return wb_token_access
 
     async def _wb_introspect(self, wb_token_access: str) -> None:

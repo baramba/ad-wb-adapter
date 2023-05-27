@@ -100,7 +100,7 @@ class CampaignTasks:
         campaign_adapter: CampaignAdapter,
     ) -> None:
         """Добавляет ключевые слова в рекламную кампанию."""
-        return await campaign_adapter.add_keywords_to_campaign(
+        await campaign_adapter.add_keywords_to_campaign(
             id=wb_campaign_id, keywords=keywords
         )
 

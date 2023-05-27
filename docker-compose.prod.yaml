@@ -23,8 +23,7 @@ x-app-cred:
   X_SUPPLIER_ID: ${X_SUPPLIER_ID}
   X_SUPPLIER_ID_EXTERNAl: ${X_SUPPLIER_ID_EXTERNAl}
   WB_TOKEN: ${WB_TOKEN}
-  <<: *redis-cred
-  <<: *rabbitmq-cred
+  <<: [ *redis-cred, *rabbitmq-cred ]
 
 services:
 

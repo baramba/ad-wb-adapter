@@ -35,4 +35,3 @@ jobs:
           push: true
           tags: |
             ${{ env.OCI_REGISTRY }}/ad/wbadapter:latest
-
