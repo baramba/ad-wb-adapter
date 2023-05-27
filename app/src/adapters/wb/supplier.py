@@ -2,8 +2,7 @@ import uuid
 
 from httpx import HTTPStatusError, Response
 from adapters.http_adapter import HTTPAdapter
-from exceptions.supplier import SupplierWBTokenError
-from schemas.v1.base import ResponseStatus
+from exceptions.base import WBAError
 
 
 class SupplierAdapter(HTTPAdapter):
@@ -36,8 +35,7 @@ class SupplierAdapter(HTTPAdapter):
             )
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise SupplierWBTokenError(
-                status=ResponseStatus.ERROR,
+            raise WBAError(
                 status_code=e.response.status_code,
                 description="Ошибка при получении(wb_grant) WBToken.",
             )
@@ -61,8 +59,7 @@ class SupplierAdapter(HTTPAdapter):
             )
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise SupplierWBTokenError(
-                status=ResponseStatus.ERROR,
+            raise WBAError(
                 status_code=e.response.status_code,
                 description="Ошибка при получении(wb_login) WBToken.",
             )
@@ -84,8 +81,7 @@ class SupplierAdapter(HTTPAdapter):
             )
             result.raise_for_status()
         except HTTPStatusError as e:
-            raise SupplierWBTokenError(
-                status=ResponseStatus.ERROR,
+            raise WBAError(
                 status_code=e.response.status_code,
                 description="Ошибка при получении(wb_login) WBToken.",
             )

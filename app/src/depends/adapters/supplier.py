@@ -1,6 +1,6 @@
 from fastapi import Depends
 import httpx
-from adapters.supplier import SupplierAdapter
+from adapters.wb.supplier import SupplierAdapter
 from depends.httpx_client import get_http_client
 
 

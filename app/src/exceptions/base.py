@@ -1,6 +1,6 @@
 from typing import Self
 
-from schemas.v1.base import ResponseStatus
+from schemas.v1.base import ResponseCode, ResponseStatus
 
 
 class WBACampaignError(Exception):
@@ -17,11 +17,10 @@ class WBAError(Exception):
     def __init__(
         self,
         *args: object,
-        status: ResponseStatus,
-        status_code: int,
+        status_code: int = ResponseCode.ERROR,
         description: str | None = None,
     ) -> None:
         super().__init__(*args)
-        self.status = status
+        self.status = ResponseStatus.ERROR
         self.status_code = status_code
         self.description = description

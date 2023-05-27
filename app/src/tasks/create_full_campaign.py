@@ -1,19 +1,20 @@
 from http import HTTPStatus
 import uuid
 from redis.asyncio import Redis
-from adapters.campaign import CampaignAdapter
+from adapters.wb.campaign import CampaignAdapter
 from adapters.token_manager import TokenManager
 from depends.adapters.campaign import get_campaign_adapter
-from depends.adapters.token_manager import get_token_manager_adapter
+from depends.adapters.token import get_token_manager_adapter
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
-from dto.campaign import CreateCampaignDTO
+from dto.campaign import CampaignCreateDTO
 from dto.job_result import RabbitJobResult
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
-from schemas.v1.supplier import WbUserAuthData
+from dto.supplier import WbUserAuthDataDTO
 from services.queue import BaseQueue
 from utils import depends_decorator
+from core.settings import logger
 
 
 class CampaignCreateFullTask:
@@ -28,7 +29,7 @@ class CampaignCreateFullTask:
         cls,
         ctx: dict,
         job_id: uuid.UUID,
-        campaign: CreateCampaignDTO,
+        campaign: CampaignCreateDTO,
         routing_key: str,
         user_id: uuid.UUID,
         redis: Redis,
@@ -39,11 +40,11 @@ class CampaignCreateFullTask:
         rabbitmq_message = RabbitJobResult(job_id=job_id).json()
         job_result: str = ""
 
-        user_auth_data: WbUserAuthData = await token_manager.auth_data_by_user_id(
+        user_auth_data: WbUserAuthDataDTO = await token_manager.auth_data_by_user_id(
             user_id
         )
 
-        campaign_adapter.auth_data = user_auth_data  # type: ignore
+        campaign_adapter.auth_data = user_auth_data
 
         try:
             wb_campaign_id = await campaign_adapter.create_campaign(
@@ -60,6 +61,7 @@ class CampaignCreateFullTask:
             await campaign_adapter.start_campaign(id=wb_campaign_id)
 
         except Exception as e:
+            logger.exception(e)
             job_result = JobResult(
                 code=e.__class__.__name__,
                 status_code=getattr(e, "status_code", 999),
@@ -87,12 +89,6 @@ class CampaignCreateFullTask:
             )
 
     @classmethod
-    @depends_decorator(
-        redis=get_redis,
-        queue_service=get_queue_service,
-        campaign_adapter=get_campaign_adapter,
-        token_manager=get_token_manager_adapter,
-    )
     async def save_and_notify_job_result(
         cls,
         job_result: str,

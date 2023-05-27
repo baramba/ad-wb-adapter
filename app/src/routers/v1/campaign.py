@@ -2,7 +2,7 @@ import uuid
 from typing import Annotated
 from arq import ArqRedis
 from depends.arq import get_arq
-from dto.campaign import CreateCampaignDTO
+from dto.campaign import CampaignCreateDTO
 from fastapi import APIRouter, Depends, Header, status
 from schemas.v1.base import JobResult, RequestQueuedResponse
 from schemas.v1.campaign import CreateCampaignResponse
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/campaigns", tags=["campaigns"])
     summary="Возвращает 200 в случае успешного создания задачи.",
 )
 async def create_full_campaign(
-    campaign: CreateCampaignDTO,
+    campaign: CampaignCreateDTO,
     user_id: Annotated[uuid.UUID, Header()],
     routing_key: Annotated[str, Header()],
     arq: ArqRedis = Depends(get_arq),

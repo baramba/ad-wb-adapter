@@ -4,7 +4,7 @@ import httpx
 client = httpx.AsyncClient()
 
 
-async def get_http_client() -> AsyncGenerator[httpx.AsyncClient, None]:
+async def get_http_client_XX() -> AsyncGenerator[httpx.AsyncClient, None]:
     try:
         yield client
     finally:

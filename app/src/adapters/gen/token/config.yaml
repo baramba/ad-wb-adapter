@@ -1,0 +1,7 @@
+project_name_override: token
+package_name_override: client
+
+post_hooks:
+  - "autoflake -i -r --remove-all-unused-imports --remove-unused-variables --ignore-init-module-imports ."
+  - "isort ."
+  - "black ."
