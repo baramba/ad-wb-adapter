@@ -7,8 +7,7 @@ from services.queue import BaseRabbitQueue
 
 async def startup() -> None:
     redis.client = Redis.from_url(settings.REDIS.build_url())
-
-    connection = await aio_pika.connect(
+    connection = await aio_pika.connect_robust(
         host=settings.RABBITMQ.HOST,
         port=settings.RABBITMQ.PORT,
         login=settings.RABBITMQ.LOGIN,

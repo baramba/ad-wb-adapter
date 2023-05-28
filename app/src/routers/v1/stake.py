@@ -47,7 +47,7 @@ async def actual_stakes(
         return ORJSONResponse(
             content=BaseResponseError(
                 description="Ошибка при получении актуальных ставок."
-            )
+            ).dict()
         )
 
     if stakes.adverts is None:

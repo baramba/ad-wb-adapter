@@ -8,6 +8,7 @@ from core.logger import logging_conf
 class Redis(BaseSettings):
     HOST: str = "redis"
     PORT: int = 6379
+    JOB_RESULT_EX_TIME: int = 86400
 
     class Config:
         env_prefix = "REDIS_"
@@ -28,7 +29,7 @@ class RabbitMQ(BaseSettings):
     PORT: int = 5672
     LOGIN: str = "rabbit_mq_login"
     PASSWORD: str = "rabbit_mq_password"
-    EXCHANGE: str = "exchange"
+    EXCHANGE: str = "wba-exchange"
     SENDER_KEY: str = "wba"
 
     class Config:
@@ -43,11 +44,12 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     BASE_DIR = Path(__file__).absolute().parent.parent
     TOKEN_MANAGER_URL: AnyHttpUrl = Field(default="http://token_manager:8888")
+    PROXY_URL: AnyHttpUrl | None = None
 
 
 settings = Settings()
 
-dictConfig(logging_conf.dict())
+dictConfig(config=logging_conf.dict())
 
 logger: logging.Logger = logging.getLogger(logging_conf.logger_name)
 logger.setLevel(settings.LOG_LEVEL)

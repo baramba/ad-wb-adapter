@@ -107,4 +107,6 @@ class CampaignCreateFullTask:
             value=job_result,
             ex=1800,
         )
-        await queue_service.publish(queue_name=routing_key, message=message, priority=1)
+        await queue_service.publish(
+            routing_key=routing_key, message=message, priority=1
+        )
