@@ -86,7 +86,8 @@ class StakeService:
         config: CampaignConfigDTO = await self.campaign_adapter.get_campaign_config(
             id=wb_campaign_id
         )
-        # если config.budget.total, то wb возвращает ошибку "Для запуска/возобновления показов пополните бюджет кампании"
+        # если config.budget.total, то wb возвращает ошибку
+        # "Для запуска/возобновления показов пополните бюджет кампании."
         config.budget.total = 100
         if config.status == CampaignStatus.STARTED:
             return OperationStatus.NOT_MODIFIED

@@ -14,7 +14,7 @@ from schemas.v1.campaign import CreateCampaignResponse
 from dto.supplier import WbUserAuthDataDTO
 from services.queue import BaseQueue
 from utils import depends_decorator
-from core.settings import logger
+from core.settings import settings, logger
 
 
 class CampaignCreateFullTask:
@@ -101,6 +101,8 @@ class CampaignCreateFullTask:
         await redis.set(
             name=name,
             value=job_result,
-            ex=1800,
+            ex=settings.REDIS.JOB_RESULT_EX_TIME,
         )
-        await queue_service.publish(queue_name=routing_key, message=message, priority=1)
+        await queue_service.publish(
+            routing_key=routing_key, message=message, priority=1
+        )

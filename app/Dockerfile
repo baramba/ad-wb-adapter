@@ -26,7 +26,7 @@ COPY pyproject.toml poetry.lock ./
 COPY ${SRC_CODE_DIR} .
 
 RUN poetry config virtualenvs.in-project true && \
-    poetry install --only=main --no-root 
+    poetry install --only=main --no-root
 
 FROM builder as final
 

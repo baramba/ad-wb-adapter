@@ -2,28 +2,32 @@ from abc import ABC, abstractmethod
 from typing import Self
 
 from aio_pika import DeliveryMode, Message
-from aio_pika.abc import AbstractChannel, AbstractConnection, AbstractExchange
+from aio_pika.abc import (
+    AbstractChannel,
+    AbstractExchange,
+    AbstractRobustConnection,
+)
 from aio_pika.abc import AbstractQueue as PikaAbstractQueue
 from core.settings import settings
 
 
 class AbstractQueue(ABC):
     @abstractmethod
-    async def publish(self, queue_name: str, message_body: str, priority: int) -> None:
+    async def publish(self, routing_key: str, message_body: str, priority: int) -> None:
         pass
 
     @abstractmethod
-    async def create_queue(self, queue_name: str) -> None:
+    async def create_queue(self, routing_key: str) -> None:
         pass
 
 
 class BaseRabbitQueue(AbstractQueue):
-    connection: AbstractConnection
+    connection: AbstractRobustConnection
     channel: AbstractChannel
     exchange: AbstractExchange
 
     @classmethod
-    async def init(cls, connection: AbstractConnection) -> Self:
+    async def init(cls, connection: AbstractRobustConnection) -> Self:
         self = cls()
         self.connection = connection
         self.channel = await self.connection.channel()
@@ -36,7 +40,7 @@ class BaseRabbitQueue(AbstractQueue):
         )
         await queue.bind(exchange=self.exchange, routing_key=queue_name)
 
-    async def publish(self, queue_name: str, message_body: str, priority: int) -> None:
+    async def publish(self, routing_key: str, message_body: str, priority: int) -> None:
         message = Message(
             body=message_body.encode("utf-8"),
             delivery_mode=DeliveryMode.PERSISTENT,
@@ -45,7 +49,7 @@ class BaseRabbitQueue(AbstractQueue):
 
         await self.exchange.publish(
             message=message,
-            routing_key=queue_name,
+            routing_key=routing_key,
         )
 
 
@@ -53,7 +57,7 @@ class BaseQueue:
     def __init__(self, queue: AbstractQueue):
         self.queue = queue
 
-    async def publish(self, queue_name: str, message: str, priority: int) -> None:
+    async def publish(self, routing_key: str, message: str, priority: int) -> None:
         await self.queue.publish(
-            queue_name=queue_name, message_body=message, priority=priority
+            routing_key=routing_key, message_body=message, priority=priority
         )
