@@ -1,14 +1,10 @@
-import traceback
-from core.settings import logger
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import ORJSONResponse
+
+from core.settings import logger
 from exceptions.base import WBAError
 from schemas.v1.base import BaseResponse, BaseResponseError
-from schemas.v1.supplier import (
-    WBToken,
-    WBTokenRequest,
-    WBTokenResponse,
-)
+from schemas.v1.supplier import WBToken, WBTokenRequest, WBTokenResponse
 from services.supplier import SupplierService, get_supplier_service
 
 router = APIRouter(prefix="/suppliers", tags=["supplier"])
@@ -34,12 +30,8 @@ async def auth_wb_user(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.error(f"{e}\n{traceback.format_exc()}")
+        logger.exception(e)
         return ORJSONResponse(
-            content=BaseResponseError(
-                description="Ошибка при получении авторизационных данных."
-            ).dict()
+            content=BaseResponseError(description="Ошибка при получении авторизационных данных.").dict()
         )
-    return ORJSONResponse(
-        content=WBTokenResponse(payload=WBToken(wb_token_access=wb_token_access)).dict()
-    )
+    return ORJSONResponse(content=WBTokenResponse(payload=WBToken(wb_token_access=wb_token_access)).dict())

@@ -5,6 +5,28 @@
         "version": "0.1.0"
     },
     "paths": {
+        "/about": {
+            "get": {
+                "summary": "About",
+                "operationId": "about_about_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "title": "Response About About Get",
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth_data": {
             "get": {
                 "tags": [
@@ -179,6 +201,7 @@
                 "required": [
                     "wb_user_id",
                     "wb_supplier_id",
+                    "wb_token_ad",
                     "wb_token_access"
                 ],
                 "type": "object",
@@ -189,8 +212,19 @@
                     },
                     "wb_supplier_id": {
                         "title": "Wb Supplier Id",
-                        "type": "string",
-                        "format": "uuid4"
+                        "type": "string"
+                    },
+                    "wb_token_standart": {
+                        "title": "Wb Token Standart",
+                        "type": "string"
+                    },
+                    "wb_token_stat": {
+                        "title": "Wb Token Stat",
+                        "type": "string"
+                    },
+                    "wb_token_ad": {
+                        "title": "Wb Token Ad",
+                        "type": "string"
                     },
                     "wb_token_access": {
                         "title": "Wb Token Access",
@@ -203,6 +237,7 @@
                 "required": [
                     "wb_user_id",
                     "wb_supplier_id",
+                    "wb_token_ad",
                     "wb_token_refresh"
                 ],
                 "type": "object",
@@ -213,8 +248,19 @@
                     },
                     "wb_supplier_id": {
                         "title": "Wb Supplier Id",
-                        "type": "string",
-                        "format": "uuid4"
+                        "type": "string"
+                    },
+                    "wb_token_standart": {
+                        "title": "Wb Token Standart",
+                        "type": "string"
+                    },
+                    "wb_token_stat": {
+                        "title": "Wb Token Stat",
+                        "type": "string"
+                    },
+                    "wb_token_ad": {
+                        "title": "Wb Token Ad",
+                        "type": "string"
                     },
                     "wb_token_refresh": {
                         "title": "Wb Token Refresh",

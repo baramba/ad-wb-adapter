@@ -10,13 +10,6 @@ repos:
 
   - repo: local
     hooks:
-      - id: black
-        name: black
-        entry: black
-        language: system
-        types: [python]
-        args: [--line-length=120, --target-version=py311, --diff]
-
       - id: autoflake
         name: autoflake
         entry: autoflake
@@ -24,11 +17,28 @@ repos:
         "types": [python]
         require_serial: true
         args:
-          - "--in-place"
-          - "--expand-star-imports"
-          - "--remove-duplicate-keys"
-          - "--remove-unused-variables"
-          - "--remove-all-unused-imports"
+          [
+            --in-place,
+            --remove-all-unused-imports,
+            --remove-duplicate-keys,
+            --verbose,
+          ]
+
+      - id: isort
+        entry: isort
+        name: isort
+        language: system
+        types: [python]
+        require_serial: false
+        args: ["--line-length", "120", "--profile", "black", "--py", "311"]
+
+      - id: black
+        name: black
+        entry: black
+        language: system
+        types: [python]
+        args: [--line-length=120, --target-version=py311, --diff]
+
       - id: flake8
         name: flake8
         entry: flake8
@@ -41,4 +51,5 @@ repos:
         entry: mypy
         language: system
         types: [python]
+        require_serial: true
         args: [--ignore-missing-imports]

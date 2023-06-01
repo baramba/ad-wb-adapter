@@ -28,7 +28,7 @@ jobs:
       - name: Format with black
         run: |
 
-          poetry run black --diff --check $(git ls-files '*.py')
+          poetry run black --line-length 120 --diff --check $(git ls-files '*.py')
       - name: Lint with flake8
         run: |
           poetry run flake8 --count --exit-zero --statistics --show-source $(git ls-files '*.py')

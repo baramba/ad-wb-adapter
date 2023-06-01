@@ -1,15 +1,14 @@
 import uuid
 
 from httpx import HTTPStatusError, Response
-from adapters.http_adapter import HTTPAdapter
+
+from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
 from exceptions.base import WBAError
 from schemas.v1.base import ResponseCode
 
 
-class SupplierAdapter(HTTPAdapter):
-    async def wb_user_auth(
-        self, wb_token_refresh: str, wb_x_supplier_id_external: uuid.UUID
-    ) -> str:
+class SupplierAdapter(WBAdapterUnofficial):
+    async def wb_user_auth(self, wb_token_refresh: str, wb_x_supplier_id_external: uuid.UUID) -> str:
         """Авторизует пользователя wildberries и возвращает WBToken (cmp.wildberries.ru).
 
         Returns:
@@ -31,15 +30,13 @@ class SupplierAdapter(HTTPAdapter):
                 "WBToken": self.wb_token_refresh,
                 "x-supplier-id-external": self.wb_x_supplier_id_external,
             }
-            result: Response = await self._post(
-                url=url, cookies=cookies, headers=headers
-            )
+            result: Response = await self._post(url=url, cookies=cookies, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
                 description="Ошибка при получении(wb_grant) WBToken.",
-            )
+            ) from e
         token: str = result.json()["token"]
         return token
 
@@ -53,24 +50,22 @@ class SupplierAdapter(HTTPAdapter):
             }
             body = {
                 "token": token,
-                "device": self.ua.random,
+                "device": self.random_device(),
             }
-            result: Response = await self._post(
-                url=url, cookies=cookies, body=body, headers=headers
-            )
+            result: Response = await self._post(url=url, cookies=cookies, body=body, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
                 description="Ошибка при получении(wb_login) WBToken.",
-            )
+            ) from e
         try:
             wb_token_access: str = str(result.cookies["WBToken"])
-        except KeyError:
+        except KeyError as exc:
             raise WBAError(
                 status_code=ResponseCode.ERROR,
                 description="Ошибка при получении(wb_login) WBToken. Не удалось прочитать cookies=WBToken.",
-            )
+            ) from exc
         return wb_token_access
 
     async def _wb_introspect(self, wb_token_access: str) -> None:
@@ -83,12 +78,10 @@ class SupplierAdapter(HTTPAdapter):
                 "x-supplier-id-external": self.wb_x_supplier_id_external,
                 "WBToken": wb_token_access,
             }
-            result: Response = await self._get(
-                url=url, cookies=cookies, headers=headers
-            )
+            result: Response = await self._get(url=url, cookies=cookies, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
                 description="Ошибка при получении(wb_login) WBToken.",
-            )
+            ) from e

@@ -1,11 +1,8 @@
-from typing import TypeVar
 import uuid
-
+from typing import TypeVar
 
 from schemas.common import BaseOrjsonModel
-from schemas.v1.base import (
-    BaseResponseSuccess,
-)
+from schemas.v1.base import BaseResponseSuccess
 
 T = TypeVar("T")
 

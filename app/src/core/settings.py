@@ -1,7 +1,9 @@
 import logging
 from logging.config import dictConfig
 from pathlib import Path
+
 from pydantic import AnyHttpUrl, BaseSettings, Field
+
 from core.logger import logging_conf
 
 

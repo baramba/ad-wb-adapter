@@ -1,4 +1,5 @@
 from redis.asyncio import Redis
+
 from core.settings import logger
 from db import redis
 

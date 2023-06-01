@@ -2,12 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Self
 
 from aio_pika import DeliveryMode, Message
-from aio_pika.abc import (
-    AbstractChannel,
-    AbstractExchange,
-    AbstractRobustConnection,
-)
+from aio_pika.abc import AbstractChannel, AbstractExchange
 from aio_pika.abc import AbstractQueue as PikaAbstractQueue
+from aio_pika.abc import AbstractRobustConnection
+
 from core.settings import settings
 
 
@@ -58,6 +56,4 @@ class BaseQueue:
         self.queue = queue
 
     async def publish(self, routing_key: str, message: str, priority: int) -> None:
-        await self.queue.publish(
-            routing_key=routing_key, message_body=message, priority=priority
-        )
+        await self.queue.publish(routing_key=routing_key, message_body=message, priority=priority)

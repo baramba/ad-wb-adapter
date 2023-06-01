@@ -1,9 +1,11 @@
 from arq import create_pool
 from arq.connections import ArqRedis, RedisSettings
+
 from core.settings import settings
 
 
 async def get_arq() -> ArqRedis:
+    redis_dns = f"redis://{settings.REDIS.HOST}:{settings.REDIS.PORT}?db=1"
     return await create_pool(
-        RedisSettings(host=settings.REDIS.HOST, port=settings.REDIS.PORT),
+        RedisSettings.from_dsn(redis_dns),
     )

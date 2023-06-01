@@ -1,4 +1,5 @@
 from pydantic import Field
+
 from schemas.common import BaseOrjsonModel
 
 
@@ -22,7 +23,7 @@ class ProductDTO(BaseOrjsonModel):
 
 
 class ProductsDTO(BaseOrjsonModel):
-    products: list[ProductDTO] | None
+    products: list[ProductDTO] | None = None
 
 
 class OrganicDTO(BaseOrjsonModel):

@@ -1,8 +1,9 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from core.settings import settings
 from depends import shutdown as sd
 from depends import startup as su
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from routers import metadata, v1
 
 app = FastAPI(

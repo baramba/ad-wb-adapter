@@ -28,9 +28,7 @@ def _get_kwargs(
     }
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Optional[UpdateStatusRequest]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[UpdateStatusRequest]:
     if response.status_code == HTTPStatus.OK:
         response_200 = UpdateStatusRequest.from_dict(response.json())
 
@@ -41,9 +39,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[UpdateStatusRequest]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[UpdateStatusRequest]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
