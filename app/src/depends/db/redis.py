@@ -8,5 +8,5 @@ async def get_redis() -> Redis:
     client: Redis | None = redis.client
     if not client:
         logger.error("redis.client is None.")
-        raise Exception("redis.client is None.")
+        raise ValueError("redis.client is None.")
     return client

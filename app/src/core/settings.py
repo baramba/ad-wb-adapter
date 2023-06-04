@@ -10,13 +10,14 @@ from core.logger import logging_conf
 class Redis(BaseSettings):
     HOST: str = "redis"
     PORT: int = 6379
+    DATABASE: str = "1"
     JOB_RESULT_EX_TIME: int = 86400
 
     class Config:
         env_prefix = "REDIS_"
 
     def build_url(self) -> str:
-        return f"redis://{self.HOST}:{self.PORT}"
+        return f"redis://{self.HOST}:{self.PORT}/{self.DATABASE}"
 
 
 class Wildberries(BaseSettings):

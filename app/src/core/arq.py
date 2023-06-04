@@ -3,9 +3,7 @@ from logging.config import dictConfig
 from arq.connections import RedisSettings
 
 from core.logger import logging_conf
-
 from core.settings import logger, settings
-
 from depends import shutdown as sd
 from depends import startup as su
 from tasks import tasks
@@ -26,4 +24,4 @@ class WorkerSettings:
     functions = tasks
     on_startup = startup
     on_shutdown = shutdown
-    redis_settings = RedisSettings(host=settings.REDIS.HOST, port=settings.REDIS.PORT)
+    redis_settings = RedisSettings(host=settings.REDIS.HOST, port=settings.REDIS.PORT, database=1)
