@@ -3,7 +3,9 @@ from logging.config import dictConfig
 from arq.connections import RedisSettings
 
 from core.logger import logging_conf
+
 from core.settings import logger, settings
+
 from depends import shutdown as sd
 from depends import startup as su
 from tasks import tasks
