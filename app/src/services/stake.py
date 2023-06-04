@@ -10,6 +10,7 @@ from depends.adapters.official.stake import get_stake_adapter
 from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
+from dto.unofficial.campaign import CampaignConfigDTO
 from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
 
 
@@ -61,7 +62,8 @@ class StakeService:
 
         # TODO: убрать после добавления subject_id в доменную модель campaign manager
         if not param:
-            param = await self.campaign_adapter_unofficial.get_subject_id(nms=wb_campaign_id)
+            config: CampaignConfigDTO = await self.campaign_adapter_unofficial.get_campaign_config(id=wb_campaign_id)
+            param = config.place[0].subjectId
 
         await self.stake_adapter.change_rate(advert_id=wb_campaign_id, cpm=rate, param=param, type=ad_type)
 
