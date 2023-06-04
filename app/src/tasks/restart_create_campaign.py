@@ -1,17 +1,19 @@
-from http import HTTPStatus
 import uuid
+from http import HTTPStatus
+
 from redis.asyncio import Redis
-from adapters.wb.campaign import CampaignAdapter
-from adapters.token_manager import TokenManager
-from depends.adapters.campaign import get_campaign_adapter
-from depends.adapters.token import get_token_manager_adapter
+
+from adapters.token import TokenManager
+from adapters.wb.unofficial.campaign import CampaignAdapterUnofficial
+from depends.adapters.token import get_token_manager
+from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
-from dto.campaign import CampaignCreateDTO
 from dto.job_result import RabbitJobResult
+from dto.token import WbUserAuthDataDTO
+from dto.unofficial.campaign import CampaignCreateDTO
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
-from dto.supplier import WbUserAuthDataDTO
 from services.queue import BaseQueue
 from utils import depends_decorator
 
@@ -21,8 +23,8 @@ class CampaignCreateFullTask:
     @depends_decorator(
         redis=get_redis,
         queue_service=get_queue_service,
-        campaign_adapter=get_campaign_adapter,
-        token_manager=get_token_manager_adapter,
+        campaign_adapter=get_campaign_adapter_unofficial,
+        token_manager=get_token_manager,
     )
     async def restart_create_full_campaign(
         cls,
@@ -33,15 +35,13 @@ class CampaignCreateFullTask:
         user_id: uuid.UUID,
         redis: Redis,
         queue_service: BaseQueue,
-        campaign_adapter: CampaignAdapter,
+        campaign_adapter: CampaignAdapterUnofficial,
         token_manager: TokenManager,
     ) -> None:
         rabbitmq_message = RabbitJobResult(job_id=job_id).json()
         job_result: str = ""
 
-        user_auth_data: WbUserAuthDataDTO = await token_manager.auth_data_by_user_id(
-            user_id
-        )
+        user_auth_data: WbUserAuthDataDTO = await token_manager.auth_data_by_user_id(user_id)
 
         campaign_adapter.auth_data = user_auth_data
 
@@ -50,12 +50,8 @@ class CampaignCreateFullTask:
                 name=campaign.name,
                 nms=campaign.nms,
             )
-            await campaign_adapter.replenish_budget(
-                id=wb_campaign_id, amount=campaign.budget
-            )
-            await campaign_adapter.add_keywords_to_campaign(
-                id=wb_campaign_id, keywords=campaign.keywords
-            )
+            await campaign_adapter.replenish_budget(id=wb_campaign_id, amount=campaign.budget)
+            await campaign_adapter.add_keywords_to_campaign(id=wb_campaign_id, keywords=campaign.keywords)
             await campaign_adapter.switch_on_fixed_list(id=wb_campaign_id)
             await campaign_adapter.start_campaign(id=wb_campaign_id)
 
@@ -90,8 +86,8 @@ class CampaignCreateFullTask:
     @depends_decorator(
         redis=get_redis,
         queue_service=get_queue_service,
-        campaign_adapter=get_campaign_adapter,
-        token_manager=get_token_manager_adapter,
+        campaign_adapter=get_campaign_adapter_unofficial,
+        token_manager=get_token_manager,
     )
     async def save_and_notify_job_result(
         cls,
@@ -107,6 +103,4 @@ class CampaignCreateFullTask:
             value=job_result,
             ex=1800,
         )
-        await queue_service.publish(
-            routing_key=routing_key, message=message, priority=1
-        )
+        await queue_service.publish(routing_key=routing_key, message=message, priority=1)

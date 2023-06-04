@@ -1,8 +1,9 @@
 import uuid
 
-from depends.db.redis import get_redis
 from fastapi import APIRouter, Depends, HTTPException, status
 from redis.asyncio import Redis
+
+from depends.db.redis import get_redis
 from schemas.v1.base import JobResult
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])

@@ -1,7 +1,8 @@
 import aio_pika
+from redis.asyncio import Redis
+
 from core.settings import settings
 from db import queue, redis
-from redis.asyncio import Redis
 from services.queue import BaseRabbitQueue
 
 

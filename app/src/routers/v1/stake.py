@@ -1,26 +1,14 @@
 import uuid
-from fastapi import Depends, status
-from fastapi.responses import Response
-from fastapi.routing import APIRouter
-from exceptions.base import WBAError
-from schemas.v1.base import (
-    BaseResponseEmpty,
-    BaseResponse,
-    BaseResponseError,
-    BaseResponseSuccess,
-)
-from fastapi.responses import ORJSONResponse
 
-from schemas.v1.stake import (
-    ActualStakes,
-    Organic,
-    OrganicResponse,
-    ProductResponse,
-    Products,
-    StakeResponse,
-)
-from services.stake import StakeService, get_stake_service
+from fastapi import Depends, status
+from fastapi.responses import ORJSONResponse, Response
+from fastapi.routing import APIRouter
+
 from core.settings import logger
+from exceptions.base import WBAError
+from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
+from schemas.v1.stake import ActualStakes, AdType, Organic, OrganicResponse, ProductResponse, Products, StakeResponse
+from services.stake import StakeService, get_stake_service
 
 router = APIRouter(prefix="/stake", tags=["stake"])
 
@@ -44,11 +32,7 @@ async def actual_stakes(
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
         logger.exception(e)
-        return ORJSONResponse(
-            content=BaseResponseError(
-                description="Ошибка при получении актуальных ставок."
-            ).dict()
-        )
+        return ORJSONResponse(content=BaseResponseError(description="Ошибка при получении актуальных ставок.").dict())
 
     if stakes.adverts is None:
         return ORJSONResponse(content=BaseResponseEmpty().dict())
@@ -77,9 +61,7 @@ async def products_by_region(
     except Exception as e:
         logger.exception(e)
         return ORJSONResponse(
-            content=BaseResponseError(
-                description="Ошибка при получении информации о продуктах в регионе."
-            )
+            content=BaseResponseError(description="Ошибка при получении информации о продуктах в регионе.")
         )
 
     if not products.products:
@@ -134,12 +116,17 @@ async def set_new_rate(
     rate: int,
     user_id: uuid.UUID,
     stake_service: StakeService = Depends(get_stake_service),
+    ad_type: AdType = AdType.SEARCH,
+    param: int | None = None,
 ) -> Response:
     try:
         await stake_service.set_new_rate(
-            rate=rate, wb_campaign_id=wb_campaign_id, user_id=user_id
+            rate=rate,
+            wb_campaign_id=wb_campaign_id,
+            ad_type=ad_type,
+            user_id=user_id,
+            param=param,
         )
-
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
@@ -170,9 +157,7 @@ async def pause_campaign(
     stake_service: StakeService = Depends(get_stake_service),
 ) -> Response:
     try:
-        await stake_service.pause_campaign(
-            wb_campaign_id=wb_campaign_id, user_id=user_id
-        )
+        await stake_service.pause_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
@@ -183,9 +168,7 @@ async def pause_campaign(
             ).dict()
         )
     return ORJSONResponse(
-        content=BaseResponseSuccess(
-            description=f"Кампания поставлена на паузу. wb_campaign_id={wb_campaign_id}"
-        ).dict()
+        content=BaseResponseSuccess(description=f"Кампания поставлена на паузу. wb_campaign_id={wb_campaign_id}").dict()
     )
 
 
@@ -203,20 +186,18 @@ async def resume_campaign(
     stake_service: StakeService = Depends(get_stake_service),
 ) -> Response:
     try:
-        await stake_service.resume_campaign(
-            wb_campaign_id=wb_campaign_id, user_id=user_id
-        )
+        await stake_service.resume_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
         logger.exception(e)
         return ORJSONResponse(
             content=BaseResponseError(
-                description=f"Ошибка при постановке кампании на паузу. wb_campaign_id={wb_campaign_id}"
+                description=f"Ошибка при возобновлении кампании. wb_campaign_id={wb_campaign_id}"
             ).dict()
         )
     return ORJSONResponse(
         content=BaseResponseSuccess(
-            description=f"Кампания поставлена на паузу. wb_campaign_id={wb_campaign_id}"
+            description=f"Работа кампании успешно возобновлена. wb_campaign_id={wb_campaign_id}"
         ).dict()
     )

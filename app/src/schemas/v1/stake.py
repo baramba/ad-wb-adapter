@@ -1,9 +1,18 @@
-from enum import Enum, auto
+from enum import IntEnum, auto
+
 from pydantic import Field
+
 from schemas.common import BaseOrjsonModel
-from schemas.v1.base import (
-    BaseResponseSuccess,
-)
+from schemas.v1.base import BaseResponseSuccess
+
+
+class AdType(IntEnum):
+    # реклама в карточке товара
+    CARD = 5
+    # реклама в поиске
+    SEARCH = 6
+    # реклама в рекомендациях на главной странице
+    RECOMEND = 7
 
 
 class ActualStakesAdverts(BaseOrjsonModel):
@@ -49,7 +58,7 @@ class OrganicResponse(BaseResponseSuccess):
     payload: Organic
 
 
-class OperationStatus(int, Enum):
+class OperationStatus(IntEnum):
     UPDATED = auto()
     NOT_MODIFIED = auto()
     NOT_UPDATED = auto()

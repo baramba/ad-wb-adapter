@@ -34,9 +34,7 @@ def _get_kwargs(
     }
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Optional[Union[HTTPValidationError, StatusRequest]]:
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[HTTPValidationError, StatusRequest]]:
     if response.status_code == HTTPStatus.CREATED:
         response_201 = StatusRequest.from_dict(response.json())
 
@@ -51,9 +49,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[HTTPValidationError, StatusRequest]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[HTTPValidationError, StatusRequest]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,

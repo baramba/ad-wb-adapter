@@ -1,13 +1,13 @@
-from exceptions.base import WBACampaignError
+from exceptions.base import WBAError
 
 
-class CampaignCreateError(WBACampaignError):
+class CampaignCreateError(WBAError):
     pass
 
 
-class CampaignInitError(WBACampaignError):
+class CampaignInitError(WBAError):
     pass
 
 
-class CampaignStartError(WBACampaignError):
+class CampaignStartError(WBAError):
     pass

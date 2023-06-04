@@ -3,9 +3,7 @@ from pydantic import BaseModel
 
 class LogConfig(BaseModel):
     logger_name: str = "ad-logger"
-    log_format: str = (
-        "%(asctime)s.%(msecs)03d %(levelname)-6s %(module)s.%(funcName)s  %(message)s"
-    )
+    log_format: str = "%(asctime)s.%(msecs)03d %(levelname)-6s %(module)s.%(funcName)s  %(message)s"
     log_level: str = "INFO"
 
     version: int = 1

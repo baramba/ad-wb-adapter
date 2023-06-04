@@ -1,8 +1,10 @@
-from enum import Enum, IntEnum
 import uuid
+from enum import Enum, IntEnum
 from typing import Generic, Optional, TypeVar
+
 from fastapi import Response
 from pydantic.generics import GenericModel
+
 from schemas.common import BaseOrjsonModel
 
 T = TypeVar("T")

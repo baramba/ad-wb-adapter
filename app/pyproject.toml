@@ -29,6 +29,7 @@ types-redis = "^4.5.4.1"
 openapi-python-client = "^0.14.0"
 pre-commit = "^3.3.2"
 autoflake = "^2.1.1"
+isort = "^5.12.0"
 
 
 
@@ -37,6 +38,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.black]
+line_length=120
 exclude = '''
 (
   /(
@@ -56,7 +58,9 @@ exclude = '''
 
 
 [tool.isort]
-profile = "black"
+# profile = "black"
+py_version=311
+line_length=120
 skip = [
     '.eggs', '.git', '.hg', '.mypy_cache', '.nox', '.pants.d', '.tox',
     '.venv', '_build', 'buck-out', 'build', 'dist', 'node_modules', 'venv',
