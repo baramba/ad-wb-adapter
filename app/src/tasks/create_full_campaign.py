@@ -58,7 +58,7 @@ class CampaignCreateFullTask:
                 user_id=user_id, wb_token_access=user_auth_data.wb_token_access
             )
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
         user_auth_data = await token_manager.auth_data_by_user_id(user_id)
         campaign_adapter.auth_data = user_auth_data
         wb_campaign_id = await campaign_adapter.create_campaign(

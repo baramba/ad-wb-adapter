@@ -77,9 +77,9 @@ class BaseWBAdapter:
         cookies: dict | None = None,
         body: dict | None = None,
     ) -> httpx.Response:
-        headers = {} or headers
-        cookies = {} or cookies
-        body = {} or body
+        headers = headers or {}
+        cookies = cookies or {}
+        body = body or {}
         response: httpx.Response = await self.http_client.post(
             url=url,
             headers=headers,
@@ -95,9 +95,9 @@ class BaseWBAdapter:
         cookies: dict | None = None,
         body: dict | None = None,
     ) -> httpx.Response:
-        headers = {} or headers
-        cookies = {} or cookies
-        body = {} or body
+        headers = headers or {}
+        cookies = cookies or {}
+        body = body or {}
         response: httpx.Response = await self.http_client.put(
             url=url,
             headers=headers,
@@ -113,9 +113,9 @@ class BaseWBAdapter:
         cookies: dict | None = None,
         params: dict | None = None,
     ) -> httpx.Response:
-        headers = {} or headers
-        cookies = {} or cookies
-        params = {} or params
+        headers = headers or {}
+        cookies = cookies or {}
+        params = params or {}
         response: httpx.Response = await self.http_client.get(
             url=url,
             headers=headers,
@@ -123,13 +123,3 @@ class BaseWBAdapter:
             params=params,
         )
         return response
-
-    # def __getattribute__(self, name: str) -> Any | None:
-    #     #  Проверяем, что _auth_data is not None.
-    #     attr = super().__getattribute__(name)
-    #     if callable(attr) and super().__getattribute__("auth_data") is None:
-    #         raise ValueError(
-    #             "Значние атрибута CampaignAdapter.auth_data = None. Для корректной работы адаптера установите \
-    #             авторизационные данные."
-    #         )
-    #     return super().__getattribute__(name)
