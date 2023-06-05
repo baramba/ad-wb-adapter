@@ -34,12 +34,12 @@ class WBAdapterUnofficial(BaseWBAdapter):
         cookies: dict | None = None,
         body: dict | None = None,
     ) -> httpx.Response:
-        if headers is None:
-            headers = dict(self.headers)
-        if cookies is None:
-            cookies = dict(self.cookies)
+        headers = headers or {}
+        cookies = cookies or {}
+        headers |= self.headers
+        cookies |= self.cookies
 
-        body = {} or body
+        body = body or {}
         response: httpx.Response = await super()._post(url, headers, cookies, body)
         return response
 
@@ -50,12 +50,11 @@ class WBAdapterUnofficial(BaseWBAdapter):
         cookies: dict | None = None,
         body: dict | None = None,
     ) -> httpx.Response:
-        if headers is None:
-            headers = dict(self.headers)
-        if cookies is None:
-            cookies = dict(self.cookies)
-        body = {} or body
-
+        headers = headers or {}
+        cookies = cookies or {}
+        headers |= self.headers
+        cookies |= self.cookies
+        body = body or {}
         response: httpx.Response = await super()._put(url, headers, cookies, body)
         return response
 
@@ -68,6 +67,7 @@ class WBAdapterUnofficial(BaseWBAdapter):
     ) -> httpx.Response:
         headers = headers or {}
         cookies = cookies or {}
+        params = params or {}
         headers |= self.headers
         cookies |= self.cookies
 
