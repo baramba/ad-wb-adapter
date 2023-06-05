@@ -57,14 +57,13 @@ class CampaignCreateFullTask:
             await token_manager.request_update_user_access_token(
                 user_id=user_id, wb_token_access=user_auth_data.wb_token_access
             )
-
-        await asyncio.sleep(10)
-        user_auth_data = await token_manager.auth_data_by_user_id(user_id)
-        campaign_adapter.auth_data = user_auth_data
-        wb_campaign_id = await campaign_adapter.create_campaign(
-            name=campaign.name,
-            nms=campaign.nms,
-        )
+            await asyncio.sleep(10)
+            user_auth_data = await token_manager.auth_data_by_user_id(user_id)
+            campaign_adapter.auth_data = user_auth_data
+            wb_campaign_id = await campaign_adapter.create_campaign(
+                name=campaign.name,
+                nms=campaign.nms,
+            )
 
         try:
             await campaign_adapter.replenish_budget(id=wb_campaign_id, amount=campaign.budget)
