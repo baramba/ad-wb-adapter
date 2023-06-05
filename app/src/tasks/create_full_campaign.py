@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from http import HTTPStatus
 
@@ -13,6 +14,7 @@ from depends.services.queue import get_queue_service
 from dto.job_result import RabbitJobResult
 from dto.token import WbUserAuthDataDTO
 from dto.unofficial.campaign import CampaignCreateDTO
+from exceptions.base import WBAErrorNotAuth
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
 from services.queue import BaseQueue
@@ -51,6 +53,20 @@ class CampaignCreateFullTask:
                 name=campaign.name,
                 nms=campaign.nms,
             )
+        except WBAErrorNotAuth:
+            await token_manager.request_update_user_access_token(
+                user_id=user_id, wb_token_access=user_auth_data.wb_token_access
+            )
+
+        await asyncio.sleep(5)
+        user_auth_data = await token_manager.auth_data_by_user_id(user_id)
+        campaign_adapter.auth_data = user_auth_data
+        wb_campaign_id = await campaign_adapter.create_campaign(
+            name=campaign.name,
+            nms=campaign.nms,
+        )
+
+        try:
             await campaign_adapter.replenish_budget(id=wb_campaign_id, amount=campaign.budget)
             await campaign_adapter.add_keywords_to_campaign(id=wb_campaign_id, keywords=campaign.keywords)
             await campaign_adapter.switch_on_fixed_list(id=wb_campaign_id)
