@@ -1,13 +1,24 @@
 import uuid
 
-from fastapi import Depends, status
+from fastapi import Depends, Query, status
 from fastapi.responses import ORJSONResponse, Response
 from fastapi.routing import APIRouter
 
 from core.settings import logger
+from dto.official.stake import CampaignsDTO, CampaignStatus, CampaignType
 from exceptions.base import WBAError
 from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
-from schemas.v1.stake import ActualStakes, AdType, Organic, OrganicResponse, ProductResponse, Products, StakeResponse
+from schemas.v1.stake import (
+    ActualStakes,
+    AdType,
+    Campaigns,
+    CampaignsResponse,
+    Organic,
+    OrganicResponse,
+    ProductResponse,
+    Products,
+    StakeResponse,
+)
 from services.stake import StakeService, get_stake_service
 
 router = APIRouter(prefix="/stake", tags=["stake"])
@@ -201,3 +212,34 @@ async def resume_campaign(
             description=f"Работа кампании успешно возобновлена. wb_campaign_id={wb_campaign_id}"
         ).dict()
     )
+
+
+@router.put(
+    path="/campaigns",
+    responses={
+        status.HTTP_200_OK: {"model": BaseResponseSuccess},
+    },
+    summary="Метод для получения списка рекламных кампаний пользователя.",
+    description="Метод позволяет позволяет получить список рекламных кампаний.",
+)
+async def campaigns(
+    user_id: uuid.UUID,
+    stake_service: StakeService = Depends(get_stake_service),
+    type: CampaignType | None = Query(None, description="Тип рекламной кампании."),
+    status: CampaignStatus | None = Query(None, description="Статус рекламной кампании."),
+) -> Response:
+    try:
+        campaigns: CampaignsDTO | None = await stake_service.campaigns(user_id=user_id, status=status, type=type)
+    except WBAError as e:
+        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
+    except Exception as e:
+        logger.exception(e)
+        return ORJSONResponse(
+            content=BaseResponseError(
+                description=f"Ошибка при получении списка рекламных кампаний. user_id={user_id}"
+            ).dict()
+        )
+    if not campaigns:
+        return ORJSONResponse(content=BaseResponseEmpty().dict())
+
+    return ORJSONResponse(content=CampaignsResponse(payload=Campaigns.parse_obj(campaigns)).dict())

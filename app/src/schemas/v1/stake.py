@@ -1,7 +1,9 @@
+from datetime import datetime
 from enum import IntEnum, auto
 
 from pydantic import Field
 
+from dto.official.stake import CampaignStatus, CampaignType
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import BaseResponseSuccess
 
@@ -70,3 +72,23 @@ class UpdateCampaignStatus(BaseOrjsonModel):
 
 class UpdateCampaignResponse(BaseResponseSuccess):
     payload: UpdateCampaignStatus
+
+
+class Campaign(BaseOrjsonModel):
+    advertId: int
+    name: str
+    type: CampaignType
+    status: CampaignStatus
+    dailyBudget: int
+    createTime: datetime
+    changeTime: datetime
+    startTime: datetime
+    endTime: datetime
+
+
+class Campaigns(BaseOrjsonModel):
+    campaigns: list[Campaign]
+
+
+class CampaignsResponse(BaseResponseSuccess):
+    payload: Campaigns | None
