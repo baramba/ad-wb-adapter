@@ -1,8 +1,9 @@
 from httpx import HTTPStatusError
-from pydantic import parse_obj_as
+from pydantic import ValidationError, parse_obj_as
 
 from adapters.wb.official.wbadapter import WBAdapter
-from dto.official.stake import ActualStakeDTO, ActualStakesDTO
+from core.settings import logger
+from dto.official.stake import ActualStakeDTO, ActualStakesDTO, CampaignDTO, CampaignsDTO, CampaignStatus, CampaignType
 from exceptions.base import WBAError
 
 
@@ -105,4 +106,71 @@ class StakeAdapter(WBAdapter):
             raise WBAError(
                 status_code=e.response.status_code,
                 description=f"Ошибка при постановке на паузу рекламной капании. wb_campaign_id={id}.",
+            ) from e
+
+    async def campaigns(
+        self,
+        status: CampaignStatus | None,
+        type: CampaignType | None,
+        limit: int | None = None,
+        offset: int | None = None,
+        order: str = "create",
+        direction: str = "desc",
+    ) -> CampaignsDTO | None:
+        """Метод позволяет получить список рекламных кампаний пользователя WB.
+
+        Arguments:
+            status -- Статус РК:
+                        7 - РК завершена
+                        9 - идут показы
+                        11 - РК на паузе
+
+        Keyword Arguments:
+            type -- Тип РК (default: {6})
+                    4 - реклама в каталоге
+                    5 - реклама в карточке товара
+                    6 - реклама в поиске
+                    7 - реклама в рекомендациях на главной странице
+            limit -- Количество кампаний в ответе (default: {None})
+            offset -- Смещение относительно первой РК (default: {None})
+            order -- Порядок (default: {"create"})
+                create (по времени создания РК),
+                change (по времени последнего изменения РК),
+                id (по идентификатору РК),
+            direction -- Направление (default: {"desc"})
+                        desc (от большего к меньшему)
+                        asc (от меньшего к большему)
+
+        Raises:
+            WBAError:
+        """
+
+        url = "https://advert-api.wb.ru/adv/v0/adverts"
+
+        params = {
+            "status": status,
+            "type": type,
+            "limit": limit,
+            "offset": offset,
+            "order": order,
+            "direction": direction,
+        }
+        try:
+            result = await self._get(url=url, params=params)
+            result.raise_for_status()
+            data = result.json()
+            if not data:
+                return None
+            campaigns = parse_obj_as(list[CampaignDTO], result.json())
+            return CampaignsDTO(campaigns=campaigns)
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description="Ошибка при получении списка рекламных кампаний.",
+            ) from e
+        except ValidationError as e:
+            logger.error("Не удалось обработать данные, полученные в ответ на запрос.")
+            logger.error(f"error={e.errors()}")
+            raise WBAError(
+                description="Ошибка при получении списка рекламных кампаний.",
             ) from e

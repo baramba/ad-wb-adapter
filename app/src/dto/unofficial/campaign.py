@@ -4,7 +4,7 @@ from uuid import UUID
 from schemas.common import BaseOrjsonModel
 
 
-class CampaignTypeEnum(str, Enum):
+class CampaignType(str, Enum):
     search = "search"
 
 
@@ -14,7 +14,7 @@ class CampaignCreateDTO(BaseOrjsonModel):
     nms: list[int]
     keywords: list[str]
     budget: int
-    type: CampaignTypeEnum
+    type: CampaignType
 
 
 class Place(BaseOrjsonModel):
