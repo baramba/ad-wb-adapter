@@ -25,6 +25,7 @@ class Wildberries(BaseSettings):
     X_SUPPLIER_ID: str = ""
     X_SUPPLIER_ID_EXTERNAl: str = ""
     WB_TOKEN: str = ""
+    OFFICIAL_API_URL: AnyHttpUrl = Field(default="https://advert-api.wb.ru/adv/v0")
 
 
 class RabbitMQ(BaseSettings):

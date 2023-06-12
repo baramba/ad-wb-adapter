@@ -10,9 +10,9 @@ from exceptions.base import WBAError
 from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
 from schemas.v1.stake import (
     ActualStakes,
-    AdType,
     Campaigns,
     CampaignsResponse,
+    IntervalsRequest,
     Organic,
     OrganicResponse,
     ProductResponse,
@@ -127,7 +127,7 @@ async def set_new_rate(
     rate: int,
     user_id: uuid.UUID,
     stake_service: StakeService = Depends(get_stake_service),
-    ad_type: AdType = AdType.SEARCH,
+    ad_type: CampaignType = CampaignType.SEARCH,
     param: int | None = None,
 ) -> Response:
     try:
@@ -243,3 +243,39 @@ async def campaigns(
         return ORJSONResponse(content=BaseResponseEmpty().dict())
 
     return ORJSONResponse(content=CampaignsResponse(payload=Campaigns.parse_obj(campaigns)).dict())
+
+
+@router.post(
+    path="/intervals",
+    responses={
+        status.HTTP_200_OK: {"model": BaseResponseSuccess},
+    },
+    summary="Метод для изменения временных интервалов для показа рекламных кампаний.",
+    description="Метод позволяет установить список временных интервалов для рекламной кампании.",
+)
+async def intervals(
+    user_id: uuid.UUID,
+    wb_campaign_id: int,
+    body: IntervalsRequest,
+    stake_service: StakeService = Depends(get_stake_service),
+) -> Response:
+    try:
+        await stake_service.set_time_intervals(
+            user_id=user_id,
+            wb_campaign_id=wb_campaign_id,
+            intervals=body.intervals,
+            param=body.param,
+        )
+        return ORJSONResponse(content=BaseResponseSuccess().dict())
+    except WBAError as e:
+        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
+    except Exception as e:
+        logger.exception(e)
+        return ORJSONResponse(
+            content=BaseResponseError(
+                description="Ошибка при установке временных интервалов. user_id={0}, wb_campaign_id={1}".format(
+                    user_id,
+                    wb_campaign_id,
+                )
+            ).dict()
+        )

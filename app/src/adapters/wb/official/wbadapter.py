@@ -31,7 +31,7 @@ class WBAdapter(BaseWBAdapter):
         if cookies is None:
             cookies = dict(self.cookies)
 
-        body = {} or body
+        body = body or {}
         response: httpx.Response = await super()._post(url, headers, cookies, body)
         return response
 
@@ -46,7 +46,7 @@ class WBAdapter(BaseWBAdapter):
             headers = dict(self.headers)
         if cookies is None:
             cookies = dict(self.cookies)
-        body = {} or body
+        body = body or {}
         response: httpx.Response = await super()._put(url, headers, cookies, body)
         return response
 
