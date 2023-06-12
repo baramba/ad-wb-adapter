@@ -20,13 +20,6 @@ class Redis(BaseSettings):
         return f"redis://{self.HOST}:{self.PORT}/{self.DATABASE}"
 
 
-class Wildberries(BaseSettings):
-    X_USER_ID: str = ""
-    X_SUPPLIER_ID: str = ""
-    X_SUPPLIER_ID_EXTERNAl: str = ""
-    WB_TOKEN: str = ""
-
-
 class RabbitMQ(BaseSettings):
     HOST: str = "rabbitmq"
     PORT: int = 5672
@@ -43,11 +36,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "wb-adapter"
     REDIS: Redis = Redis()
     RABBITMQ: RabbitMQ = RabbitMQ()
-    WILDBERRIES: Wildberries = Wildberries()
     LOG_LEVEL: str = "INFO"
     BASE_DIR = Path(__file__).absolute().parent.parent
     TOKEN_MANAGER_URL: AnyHttpUrl = Field(default="http://token_manager:8888")
     PROXY_URL: AnyHttpUrl | None = None
+    CONTEXT: str = "/api/ad"
 
 
 settings = Settings()

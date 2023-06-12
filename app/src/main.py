@@ -8,8 +8,8 @@ from routers import metadata, v1
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    docs_url="/api/docs",
-    openapi_url="/api/openapi.json",
+    docs_url=f"{settings.CONTEXT}/docs/swagger",
+    openapi_url=f"{settings.CONTEXT}/docs/openapi",
     openapi_tags=metadata.tags,
     description=metadata.description,
 )
