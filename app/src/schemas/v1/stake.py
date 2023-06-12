@@ -3,18 +3,9 @@ from enum import IntEnum, auto
 
 from pydantic import Field
 
-from dto.official.stake import CampaignStatus, CampaignType
+from dto.official.stake import CampaignStatus, CampaignType, IntervalDTO
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import BaseResponseSuccess
-
-
-class AdType(IntEnum):
-    # реклама в карточке товара
-    CARD = 5
-    # реклама в поиске
-    SEARCH = 6
-    # реклама в рекомендациях на главной странице
-    RECOMEND = 7
 
 
 class ActualStakesAdverts(BaseOrjsonModel):
@@ -92,3 +83,8 @@ class Campaigns(BaseOrjsonModel):
 
 class CampaignsResponse(BaseResponseSuccess):
     payload: Campaigns | None
+
+
+class IntervalsRequest(BaseOrjsonModel):
+    intervals: list[IntervalDTO]
+    param: int | None = None

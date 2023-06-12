@@ -10,7 +10,7 @@ from depends.adapters.official.stake import get_stake_adapter
 from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
-from dto.official.stake import CampaignsDTO, CampaignStatus, CampaignType
+from dto.official.stake import CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
 from dto.unofficial.campaign import CampaignConfigDTO
 from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
 
@@ -95,6 +95,23 @@ class StakeService:
         auth_data = await self.token_manager.auth_data_by_user_id(user_id)
         self.stake_adapter.auth_data = auth_data
         return await self.stake_adapter.campaigns(type=type, status=status)
+
+    async def set_time_intervals(
+        self,
+        user_id: uuid.UUID,
+        wb_campaign_id: int,
+        intervals: list[IntervalDTO],
+        param: int | None,
+    ) -> None:
+        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+        self.stake_adapter.auth_data = auth_data
+        self.campaign_adapter_unofficial.auth_data = auth_data
+
+        # TODO: убрать после добавления subject_id в доменную модель campaign manager
+        if not param:
+            config: CampaignConfigDTO = await self.campaign_adapter_unofficial.get_campaign_config(id=wb_campaign_id)
+            param = config.place[0].subjectId
+        await self.stake_adapter.set_time_intervals(wb_campaign_id=wb_campaign_id, intervals=intervals, param=param)
 
 
 async def get_stake_service(
