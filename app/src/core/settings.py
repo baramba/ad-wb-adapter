@@ -20,6 +20,10 @@ class Redis(BaseSettings):
         return f"redis://{self.HOST}:{self.PORT}/{self.DATABASE}"
 
 
+class Wildberries(BaseSettings):
+    OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0/"
+
+
 class RabbitMQ(BaseSettings):
     HOST: str = "rabbitmq"
     PORT: int = 5672
@@ -36,6 +40,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "wb-adapter"
     REDIS: Redis = Redis()
     RABBITMQ: RabbitMQ = RabbitMQ()
+    WILDBERRIES: Wildberries = Wildberries()
     LOG_LEVEL: str = "INFO"
     BASE_DIR = Path(__file__).absolute().parent.parent
     TOKEN_MANAGER_URL: AnyHttpUrl = Field(default="http://token_manager:8888")

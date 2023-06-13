@@ -2,8 +2,16 @@ from httpx import HTTPStatusError
 from pydantic import ValidationError, parse_obj_as
 
 from adapters.wb.official.wbadapter import WBAdapter
-from core.settings import logger
-from dto.official.stake import ActualStakeDTO, ActualStakesDTO, CampaignDTO, CampaignsDTO, CampaignStatus, CampaignType
+from core.settings import logger, settings
+from dto.official.stake import (
+    ActualStakeDTO,
+    ActualStakesDTO,
+    CampaignDTO,
+    CampaignsDTO,
+    CampaignStatus,
+    CampaignType,
+    IntervalDTO,
+)
 from exceptions.base import WBAError
 
 
@@ -11,7 +19,7 @@ class StakeAdapter(WBAdapter):
     async def actual_stakes(self, type: int, param: int) -> ActualStakesDTO:
         """Метод возвращает список актуальных ставок по ключевой фразе."""
 
-        url = "https://advert-api.wb.ru/adv/v0/cpm"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/cpm"
         params = {
             "type": type,
             "param": param,
@@ -44,7 +52,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = "https://advert-api.wb.ru/adv/v0/cpm"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/cpm"
 
         body = {
             "advertId": advert_id,
@@ -72,7 +80,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = "https://advert-api.wb.ru/adv/v0/start"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/start"
 
         params = {"id": id}
 
@@ -95,7 +103,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = "https://advert-api.wb.ru/adv/v0/pause"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/pause"
 
         params = {"id": id}
 
@@ -145,7 +153,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = "https://advert-api.wb.ru/adv/v0/adverts"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/adverts"
 
         params = {
             "status": status,
@@ -173,4 +181,34 @@ class StakeAdapter(WBAdapter):
             logger.error(f"error={e.errors()}")
             raise WBAError(
                 description="Ошибка при получении списка рекламных кампаний.",
+            ) from e
+
+    async def set_time_intervals(self, wb_campaign_id: int, intervals: list[IntervalDTO], param: int) -> None:
+        """Метод позволяет установить время показа рекламной кампании.
+
+        Arguments:
+            wb_campaign_id -- идентификатор кампании.
+            intervals -- временные интервалы:
+                        begin -- время начала показов, по 24 часовой схеме ("begin": 15);
+                        end -- время окончания показов, по 24 часовой схеме ("end": 21);
+            param -- Параметр, для которого будет внесено изменение, должен быть значением menuId (для РК в каталоге),
+                     subjectId (для РК в поиске и рекомендациях) или setId (для РК в карточке товара).
+
+        Raises:
+            WBAError: _description_
+        """
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/intervals"
+        body = {
+            "advertId": wb_campaign_id,
+            "intervals": [interval.dict() for interval in intervals],
+            "param": param,
+        }
+
+        try:
+            result = await self._post(url=url, body=body)
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description="Ошибка изменения интервала показа РК.",
             ) from e

@@ -57,3 +57,12 @@ class CampaignDTO(BaseOrjsonModel):
 
 class CampaignsDTO(BaseOrjsonModel):
     campaigns: list[CampaignDTO]
+
+
+class IntervalDTO(BaseOrjsonModel):
+    begin: int
+    end: int
+
+
+class IntervalsDTO(BaseOrjsonModel):
+    intervals: list[IntervalDTO]

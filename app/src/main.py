@@ -12,7 +12,6 @@ app = FastAPI(
     openapi_tags=metadata.tags,
     description=metadata.description,
     root_path=settings.CONTEXT,
-    servers=[{"url": settings.CONTEXT}],
 )
 
 

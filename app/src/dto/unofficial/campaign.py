@@ -1,11 +1,8 @@
 from enum import Enum
 from uuid import UUID
 
+from dto.official.stake import CampaignType
 from schemas.common import BaseOrjsonModel
-
-
-class CampaignType(str, Enum):
-    search = "search"
 
 
 class CampaignCreateDTO(BaseOrjsonModel):
@@ -24,7 +21,7 @@ class Place(BaseOrjsonModel):
     placesInfo: dict
     searchElements: list
     dailyBudget: int
-    intervals: str | None = None
+    intervals: list | None = None
     excludedWords: str | None = None
 
 
