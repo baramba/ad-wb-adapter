@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from core.settings import settings
 from depends import shutdown as sd
@@ -8,10 +7,12 @@ from routers import metadata, v1
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
-    docs_url=f"{settings.CONTEXT}/docs/swagger",
-    openapi_url=f"{settings.CONTEXT}/docs/openapi",
+    docs_url="/docs/swagger",
+    openapi_url="/docs/openapi",
     openapi_tags=metadata.tags,
     description=metadata.description,
+    root_path=settings.CONTEXT,
+    servers=[{"url": settings.CONTEXT}],
 )
 
 
@@ -36,13 +37,3 @@ async def root() -> dict[str, dict]:
 
 
 app.include_router(v1.router)
-
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
