@@ -21,11 +21,7 @@ class Redis(BaseSettings):
 
 
 class Wildberries(BaseSettings):
-    X_USER_ID: str = ""
-    X_SUPPLIER_ID: str = ""
-    X_SUPPLIER_ID_EXTERNAl: str = ""
-    WB_TOKEN: str = ""
-    OFFICIAL_API_URL: AnyHttpUrl = Field(default="https://advert-api.wb.ru/adv/v0")
+    OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0/"
 
 
 class RabbitMQ(BaseSettings):
@@ -49,6 +45,7 @@ class Settings(BaseSettings):
     BASE_DIR = Path(__file__).absolute().parent.parent
     TOKEN_MANAGER_URL: AnyHttpUrl = Field(default="http://token_manager:8888")
     PROXY_URL: AnyHttpUrl | None = None
+    CONTEXT: str = "/api/ad"
 
 
 settings = Settings()

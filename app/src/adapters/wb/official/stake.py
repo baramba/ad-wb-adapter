@@ -19,7 +19,7 @@ class StakeAdapter(WBAdapter):
     async def actual_stakes(self, type: int, param: int) -> ActualStakesDTO:
         """Метод возвращает список актуальных ставок по ключевой фразе."""
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_URL}/cpm"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/cpm"
         params = {
             "type": type,
             "param": param,
@@ -52,7 +52,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_URL}/cpm"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/cpm"
 
         body = {
             "advertId": advert_id,
@@ -80,7 +80,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_URL}/start"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/start"
 
         params = {"id": id}
 
@@ -103,7 +103,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_URL}/pause"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/pause"
 
         params = {"id": id}
 
@@ -153,7 +153,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_URL}/adverts"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/adverts"
 
         params = {
             "status": status,
@@ -197,7 +197,7 @@ class StakeAdapter(WBAdapter):
         Raises:
             WBAError: _description_
         """
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_URL}/intervals"
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/intervals"
         body = {
             "advertId": wb_campaign_id,
             "intervals": [interval.dict() for interval in intervals],
