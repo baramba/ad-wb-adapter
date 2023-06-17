@@ -4,8 +4,8 @@ from httpx import ConnectError
 
 from adapters.gen.token.token.client import Client
 from adapters.gen.token.token.client.api.auth_data import (
-    get_auth_data_api_v1_auth_data_get,
-    update_wb_token_api_v1_auth_data_update_get,
+    get_auth_data_v1_auth_data_get,
+    update_wb_token_v1_auth_data_update_get,
 )
 from adapters.gen.token.token.client.models import AuthDataGetResponse
 from adapters.gen.token.token.client.models.http_validation_error import HTTPValidationError
@@ -27,11 +27,9 @@ class TokenManager:
 
     async def auth_data_by_user_id(self, user_id: uuid.UUID) -> WbUserAuthDataDTO:
         try:
-            auth_data: AuthDataGetResponse | HTTPValidationError | None = (
-                await get_auth_data_api_v1_auth_data_get.asyncio(
-                    client=self.client,
-                    user_id=str(user_id),
-                )
+            auth_data: AuthDataGetResponse | HTTPValidationError | None = await get_auth_data_v1_auth_data_get.asyncio(
+                client=self.client,
+                user_id=str(user_id),
             )
         except ConnectError:
             logger.error(f"Не удалось подключиться к token manager ({self.url}).")
@@ -57,7 +55,7 @@ class TokenManager:
         )
 
     async def request_update_user_access_token(self, user_id: uuid.UUID, wb_token_access: str) -> None:
-        await update_wb_token_api_v1_auth_data_update_get.asyncio(
+        await update_wb_token_v1_auth_data_update_get.asyncio(
             client=self.client,
             user_id=str(user_id),
             wb_token_access=wb_token_access,

@@ -4,6 +4,11 @@
         "title": "token-manager",
         "version": "0.1.0"
     },
+    "servers": [
+        {
+            "url": "/api/tm"
+        }
+    ],
     "paths": {
         "/about": {
             "get": {
@@ -27,14 +32,14 @@
                 }
             }
         },
-        "/api/v1/auth_data": {
+        "/v1/auth_data": {
             "get": {
                 "tags": [
                     "auth data"
                 ],
                 "summary": "Метод для получения пользовательских данных",
                 "description": "Метод позволяет получить пользовательские данные, в том числе wb_token.",
-                "operationId": "get_auth_data_api_v1_auth_data_get",
+                "operationId": "get_auth_data_v1_auth_data_get",
                 "parameters": [
                     {
                         "required": true,
@@ -74,7 +79,7 @@
                     "auth data"
                 ],
                 "summary": "Метод сохраняет пользовательские данные",
-                "operationId": "create_auth_data_api_v1_auth_data_post",
+                "operationId": "create_auth_data_v1_auth_data_post",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -114,14 +119,14 @@
                 ]
             }
         },
-        "/api/v1/auth_data/update": {
+        "/v1/auth_data/update": {
             "get": {
                 "tags": [
                     "auth data"
                 ],
                 "summary": "Метод для обновления wb_token",
                 "description": "Метод для запроса на обновление wb_token.",
-                "operationId": "update_wb_token_api_v1_auth_data_update_get",
+                "operationId": "update_wb_token_v1_auth_data_update_get",
                 "parameters": [
                     {
                         "required": true,
@@ -166,14 +171,14 @@
                 }
             }
         },
-        "/api/v1/auth_data/check": {
+        "/v1/auth_data/check": {
             "get": {
                 "tags": [
                     "auth data"
                 ],
                 "summary": "Метод для получения информации о наличии данных",
                 "description": "Метод возвращает информацию о наличии данных. Сами данные не возвращаются.",
-                "operationId": "check_auth_data_api_v1_auth_data_check_get",
+                "operationId": "check_auth_data_v1_auth_data_check_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",

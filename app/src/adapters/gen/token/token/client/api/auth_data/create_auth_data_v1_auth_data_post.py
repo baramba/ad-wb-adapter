@@ -4,45 +4,41 @@ from typing import Any, Dict, Optional, Union
 import httpx
 
 from ... import errors
-from ...client import Client
-from ...models.auth_data_get_response import AuthDataGetResponse
+from ...client import AuthenticatedClient, Client
+from ...models.create_auth_data import CreateAuthData
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Response
+from ...models.status_request import StatusRequest
+from ...types import Response
 
 
 def _get_kwargs(
     *,
-    client: Client,
-    user_id: str,
+    client: AuthenticatedClient,
+    json_body: CreateAuthData,
 ) -> Dict[str, Any]:
-    url = "{}/api/v1/auth_data".format(client.base_url)
+    url = "{}/v1/auth_data".format(client.base_url)
 
     headers: Dict[str, str] = client.get_headers()
     cookies: Dict[str, Any] = client.get_cookies()
 
-    params: Dict[str, Any] = {}
-    params["user_id"] = user_id
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+    json_json_body = json_body.to_dict()
 
     return {
-        "method": "get",
+        "method": "post",
         "url": url,
         "headers": headers,
         "cookies": cookies,
         "timeout": client.get_timeout(),
         "follow_redirects": client.follow_redirects,
-        "params": params,
+        "json": json_json_body,
     }
 
 
-def _parse_response(
-    *, client: Client, response: httpx.Response
-) -> Optional[Union[AuthDataGetResponse, HTTPValidationError]]:
-    if response.status_code == HTTPStatus.OK:
-        response_200 = AuthDataGetResponse.from_dict(response.json())
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[HTTPValidationError, StatusRequest]]:
+    if response.status_code == HTTPStatus.CREATED:
+        response_201 = StatusRequest.from_dict(response.json())
 
-        return response_200
+        return response_201
     if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
         response_422 = HTTPValidationError.from_dict(response.json())
 
@@ -53,9 +49,7 @@ def _parse_response(
         return None
 
 
-def _build_response(
-    *, client: Client, response: httpx.Response
-) -> Response[Union[AuthDataGetResponse, HTTPValidationError]]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[HTTPValidationError, StatusRequest]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -66,27 +60,25 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Client,
-    user_id: str,
-) -> Response[Union[AuthDataGetResponse, HTTPValidationError]]:
-    """Метод для получения пользовательских данных
-
-     Метод позволяет получить пользовательские данные, в том числе wb_token.
+    client: AuthenticatedClient,
+    json_body: CreateAuthData,
+) -> Response[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет пользовательские данные
 
     Args:
-        user_id (str):
+        json_body (CreateAuthData):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[AuthDataGetResponse, HTTPValidationError]]
+        Response[Union[HTTPValidationError, StatusRequest]]
     """
 
     kwargs = _get_kwargs(
         client=client,
-        user_id=user_id,
+        json_body=json_body,
     )
 
     response = httpx.request(
@@ -99,53 +91,49 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Client,
-    user_id: str,
-) -> Optional[Union[AuthDataGetResponse, HTTPValidationError]]:
-    """Метод для получения пользовательских данных
-
-     Метод позволяет получить пользовательские данные, в том числе wb_token.
+    client: AuthenticatedClient,
+    json_body: CreateAuthData,
+) -> Optional[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет пользовательские данные
 
     Args:
-        user_id (str):
+        json_body (CreateAuthData):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[AuthDataGetResponse, HTTPValidationError]
+        Union[HTTPValidationError, StatusRequest]
     """
 
     return sync_detailed(
         client=client,
-        user_id=user_id,
+        json_body=json_body,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
-    client: Client,
-    user_id: str,
-) -> Response[Union[AuthDataGetResponse, HTTPValidationError]]:
-    """Метод для получения пользовательских данных
-
-     Метод позволяет получить пользовательские данные, в том числе wb_token.
+    client: AuthenticatedClient,
+    json_body: CreateAuthData,
+) -> Response[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет пользовательские данные
 
     Args:
-        user_id (str):
+        json_body (CreateAuthData):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[AuthDataGetResponse, HTTPValidationError]]
+        Response[Union[HTTPValidationError, StatusRequest]]
     """
 
     kwargs = _get_kwargs(
         client=client,
-        user_id=user_id,
+        json_body=json_body,
     )
 
     async with httpx.AsyncClient(verify=client.verify_ssl) as _client:
@@ -156,27 +144,25 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Client,
-    user_id: str,
-) -> Optional[Union[AuthDataGetResponse, HTTPValidationError]]:
-    """Метод для получения пользовательских данных
-
-     Метод позволяет получить пользовательские данные, в том числе wb_token.
+    client: AuthenticatedClient,
+    json_body: CreateAuthData,
+) -> Optional[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет пользовательские данные
 
     Args:
-        user_id (str):
+        json_body (CreateAuthData):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[AuthDataGetResponse, HTTPValidationError]
+        Union[HTTPValidationError, StatusRequest]
     """
 
     return (
         await asyncio_detailed(
             client=client,
-            user_id=user_id,
+            json_body=json_body,
         )
     ).parsed
