@@ -48,7 +48,6 @@ class ProductAdapter(WBAdapterUnofficial):
             result = await self._get(url=url, headers=headers)
             result.raise_for_status()
         except HTTPStatusError as e:
-            logger.debug(e.request.headers)
             raise error_for_raise(
                 status_code=e.response.status_code,
                 description="Ошибка при получении списка категорий.",

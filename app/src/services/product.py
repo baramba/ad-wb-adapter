@@ -43,11 +43,11 @@ class ProductService:
             categories: CategoriesDTO = await self.product_adapter.categories()
             return categories
         except WBAErrorNotAuth:
-            # await self.token_manager.request_update_user_access_token(
-            #     user_id=user_id,
-            #     wb_token_access=auth_data.wb_token_access,
-            # )
-            await asyncio.sleep(3)
+            await self.token_manager.request_update_user_access_token(
+                user_id=user_id,
+                wb_token_access=auth_data.wb_token_access,
+            )
+            await asyncio.sleep(5)
             auth_data = await self.token_manager.auth_data_by_user_id(user_id)
             self.product_adapter.auth_data = auth_data
         categories = await self.product_adapter.categories()
