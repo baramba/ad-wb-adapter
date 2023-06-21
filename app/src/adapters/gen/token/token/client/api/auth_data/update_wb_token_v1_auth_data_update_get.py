@@ -16,7 +16,7 @@ def _get_kwargs(
     user_id: str,
     wb_token_access: str,
 ) -> Dict[str, Any]:
-    url = "{}/api/v1/auth_data/update".format(client.base_url)
+    url = "{}/v1/auth_data/update".format(client.base_url)
 
     headers: Dict[str, str] = client.get_headers()
     cookies: Dict[str, Any] = client.get_cookies()

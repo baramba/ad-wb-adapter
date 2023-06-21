@@ -217,7 +217,7 @@ async def resume_campaign(
 @router.put(
     path="/campaigns",
     responses={
-        status.HTTP_200_OK: {"model": BaseResponseSuccess},
+        status.HTTP_200_OK: {"model": CampaignsResponse},
     },
     summary="Метод для получения списка рекламных кампаний пользователя.",
     description="Метод позволяет позволяет получить список рекламных кампаний.",
