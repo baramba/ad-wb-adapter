@@ -1,12 +1,19 @@
 import contextlib
 import json
 import random
+from http import HTTPStatus
 from urllib.parse import unquote
 
+import backoff
 import httpx
 
-from core.settings import logger
+from core.settings import logger, settings
 from dto.token import WbUserAuthDataDTO
+
+
+def retry_then_5xx(e: Exception) -> bool:
+    status = e.response.status_code  # type: ignore[attr-defined]
+    return not (status == HTTPStatus.TOO_MANY_REQUESTS or (500 <= status < 600))
 
 
 class BaseWBAdapter:
@@ -17,6 +24,7 @@ class BaseWBAdapter:
             "response": [self._log_response],
         }
         self._auth_data: WbUserAuthDataDTO | None = None
+        self.max_tries: int = 5
 
     @property
     def auth_data(self) -> WbUserAuthDataDTO | None:
@@ -62,7 +70,7 @@ class BaseWBAdapter:
         request = response.request
         content: str = (await response.aread()).decode("utf-8")
         logger.debug(
-            "{0}: {1}, {2}, data: {3}".format(
+            "{0}: {1}, status: {2}, data: {3}".format(
                 request.method,
                 unquote(str(request.url)),
                 response.status_code,
@@ -70,6 +78,13 @@ class BaseWBAdapter:
             )
         )
 
+    @backoff.on_exception(
+        backoff.fibo,
+        exception=httpx.HTTPStatusError,
+        max_time=settings.WBADAPTER.MAX_RETRY_TIME,
+        giveup=retry_then_5xx,
+        jitter=None,
+    )
     async def _post(
         self,
         url: str,
@@ -86,8 +101,16 @@ class BaseWBAdapter:
             cookies=cookies,
             json=body,
         )
+        response.raise_for_status()
         return response
 
+    @backoff.on_exception(
+        backoff.fibo,
+        exception=httpx.HTTPStatusError,
+        max_time=settings.WBADAPTER.MAX_RETRY_TIME,
+        giveup=retry_then_5xx,
+        jitter=None,
+    )
     async def _put(
         self,
         url: str,
@@ -104,8 +127,16 @@ class BaseWBAdapter:
             cookies=cookies,
             json=body,
         )
+        response.raise_for_status()
         return response
 
+    @backoff.on_exception(
+        backoff.fibo,
+        exception=httpx.HTTPStatusError,
+        max_time=settings.WBADAPTER.MAX_RETRY_TIME,
+        giveup=retry_then_5xx,
+        jitter=None,
+    )
     async def _get(
         self,
         url: str,
@@ -122,4 +153,5 @@ class BaseWBAdapter:
             cookies=cookies,
             params=params,
         )
+        response.raise_for_status()
         return response
