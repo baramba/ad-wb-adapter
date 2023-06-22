@@ -37,7 +37,7 @@ class RabbitMQ(BaseSettings):
 
 
 class WBAdapter(BaseSettings):
-    MAX_RETRY_TIME: int = 30
+    MAX_RETRY_TIME: int = 10
 
 
 class Settings(BaseSettings):

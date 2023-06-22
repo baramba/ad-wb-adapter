@@ -2,7 +2,7 @@ import fake_useragent as fk_ua
 import httpx
 
 from adapters.wb.wbadapter import BaseWBAdapter
-from dto.token import WbUserAuthDataDTO
+from dto.token import UnofficialUserAuthDataDTO, UserAuthDataBase
 
 browsers = ["chrome", "opera", "firefox", "edge"]
 
@@ -15,13 +15,14 @@ class WBAdapterUnofficial(BaseWBAdapter):
             "User-Agent": self.ua.random,
         }
         self.cookies: dict = {}
+        self._auth_data: UnofficialUserAuthDataDTO | None = None
 
     @property
-    def auth_data(self) -> WbUserAuthDataDTO | None:
-        return super().auth_data
+    def auth_data(self) -> UserAuthDataBase | None:
+        return self._auth_data
 
     @auth_data.setter
-    def auth_data(self, auth_data: WbUserAuthDataDTO) -> None:
+    def auth_data(self, auth_data: UnofficialUserAuthDataDTO) -> None:
         self._auth_data = auth_data
         self.headers["X-User-Id"] = str(auth_data.wb_user_id)
         self.cookies["x-supplier-id-external"] = auth_data.wb_supplier_id

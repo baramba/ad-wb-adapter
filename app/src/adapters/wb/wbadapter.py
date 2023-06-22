@@ -8,7 +8,7 @@ import backoff
 import httpx
 
 from core.settings import logger, settings
-from dto.token import WbUserAuthDataDTO
+from dto.token import UserAuthDataBase
 
 
 def retry_then_5xx(e: Exception) -> bool:
@@ -23,15 +23,14 @@ class BaseWBAdapter:
             "request": [self._log_request],
             "response": [self._log_response],
         }
-        self._auth_data: WbUserAuthDataDTO | None = None
-        self.max_tries: int = 5
+        self._auth_data: UserAuthDataBase | None = None
 
     @property
-    def auth_data(self) -> WbUserAuthDataDTO | None:
+    def auth_data(self) -> UserAuthDataBase | None:
         return self._auth_data
 
     @auth_data.setter
-    def auth_data(self, auth_data: WbUserAuthDataDTO) -> None:
+    def auth_data(self, auth_data: UserAuthDataBase) -> None:
         self._auth_data = auth_data
 
     @staticmethod
@@ -59,7 +58,7 @@ class BaseWBAdapter:
             content = json.loads(content)
 
         logger.debug(
-            "{0}: {1}, data: {2}".format(
+            "Request {0}: {1}, data: {2}".format(
                 request.method,
                 unquote(str(request.url)),
                 str(content),
@@ -68,9 +67,9 @@ class BaseWBAdapter:
 
     async def _log_response(self, response: httpx.Response) -> None:
         request = response.request
-        content: str = (await response.aread()).decode("utf-8")
+        content: str = (await response.aread()).decode("utf-8").strip()
         logger.debug(
-            "{0}: {1}, status: {2}, data: {3}".format(
+            "Response {0}: {1}, status: {2}, data: {3}".format(
                 request.method,
                 unquote(str(request.url)),
                 response.status_code,

@@ -21,7 +21,7 @@ class ProductService:
         self.token_manager = token_manager
 
     async def products(self, user_id: uuid.UUID, subject_id: int) -> ProductsSubjectDTO:
-        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
         self.product_adapter.auth_data = auth_data
         try:
             products: ProductsSubjectDTO = await self.product_adapter.products_by_subject(subject_id=subject_id)
@@ -32,12 +32,12 @@ class ProductService:
                 wb_token_access=auth_data.wb_token_access,
             )
             await asyncio.sleep(2)
-            self.product_adapter.auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+            self.product_adapter.auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
         products = await self.product_adapter.products_by_subject(subject_id=subject_id)
         return products
 
     async def categories(self, user_id: uuid.UUID) -> CategoriesDTO:
-        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
         self.product_adapter.auth_data = auth_data
         try:
             categories: CategoriesDTO = await self.product_adapter.categories()
@@ -48,7 +48,7 @@ class ProductService:
                 wb_token_access=auth_data.wb_token_access,
             )
             await asyncio.sleep(5)
-            auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+            auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
             self.product_adapter.auth_data = auth_data
         categories = await self.product_adapter.categories()
         return categories
