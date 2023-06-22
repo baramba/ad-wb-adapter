@@ -21,7 +21,7 @@ class Redis(BaseSettings):
 
 
 class Wildberries(BaseSettings):
-    OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0/"
+    OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0"
 
 
 class RabbitMQ(BaseSettings):

@@ -10,10 +10,12 @@ import httpx
 from core.settings import logger, settings
 from dto.token import UserAuthDataBase
 
+RETRY_CODES = [HTTPStatus.TOO_MANY_REQUESTS, HTTPStatus.BAD_REQUEST]
+
 
 def retry_then_5xx(e: Exception) -> bool:
     status = e.response.status_code  # type: ignore[attr-defined]
-    return not (status == HTTPStatus.TOO_MANY_REQUESTS or (500 <= status < 600))
+    return not (status in RETRY_CODES or (500 <= status < 600))
 
 
 class BaseWBAdapter:

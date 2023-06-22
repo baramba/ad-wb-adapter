@@ -11,6 +11,7 @@ from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
 from dto.official.stake import CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
+from dto.token import OfficialUserAuthDataDTO
 from dto.unofficial.campaign import CampaignConfigDTO
 from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
 
@@ -57,8 +58,8 @@ class StakeService:
         ad_type: int,
         param: int | None = None,
     ) -> None:
-        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
-        self.stake_adapter.auth_data = auth_data
+        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
+        self.stake_adapter.auth_data = OfficialUserAuthDataDTO(wb_token_ad=auth_data.wb_token_ad)
         self.campaign_adapter_unofficial.auth_data = auth_data
 
         # TODO: убрать после добавления subject_id в доменную модель campaign manager
@@ -73,7 +74,7 @@ class StakeService:
         wb_campaign_id: int,
         user_id: uuid.UUID,
     ) -> None:
-        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
         self.stake_adapter.auth_data = auth_data
         await self.stake_adapter.pause_campaign(id=wb_campaign_id)
 
@@ -82,7 +83,7 @@ class StakeService:
         wb_campaign_id: int,
         user_id: uuid.UUID,
     ) -> None:
-        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
         self.stake_adapter.auth_data = auth_data
         await self.stake_adapter.start_campaign(id=wb_campaign_id)
 
@@ -92,7 +93,7 @@ class StakeService:
         type: CampaignType | None,
         status: CampaignStatus | None,
     ) -> CampaignsDTO | None:
-        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
+        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
         self.stake_adapter.auth_data = auth_data
         return await self.stake_adapter.campaigns(type=type, status=status)
 
@@ -103,8 +104,8 @@ class StakeService:
         intervals: list[IntervalDTO],
         param: int | None,
     ) -> None:
-        auth_data = await self.token_manager.auth_data_by_user_id(user_id)
-        self.stake_adapter.auth_data = auth_data
+        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
+        self.stake_adapter.auth_data = OfficialUserAuthDataDTO(wb_token_ad=auth_data.wb_token_ad)
         self.campaign_adapter_unofficial.auth_data = auth_data
 
         # TODO: убрать после добавления subject_id в доменную модель campaign manager

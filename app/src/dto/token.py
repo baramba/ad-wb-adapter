@@ -24,4 +24,4 @@ class UnofficialUserAuthDataDTO(UserAuthDataBase):
     wb_token_access: str
     wb_token_standart: str | None = None
     wb_token_stat: str | None = None
-    wb_token_ad: str | None = None
+    wb_token_ad: str

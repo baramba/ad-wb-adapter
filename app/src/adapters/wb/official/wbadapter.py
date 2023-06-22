@@ -9,6 +9,7 @@ class WBAdapter(BaseWBAdapter):
         super().__init__(http_client=http_client)
         self.headers: dict = {}
         self.cookies: dict = {}
+        self._auth_data: OfficialUserAuthDataDTO | None = None
 
     @property
     def auth_data(self) -> UserAuthDataBase | None:

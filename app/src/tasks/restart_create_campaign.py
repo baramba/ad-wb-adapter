@@ -10,7 +10,7 @@ from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
 from dto.job_result import RabbitJobResult
-from dto.token import UserAuthDataDTO
+from dto.token import UnofficialUserAuthDataDTO
 from dto.unofficial.campaign import CampaignCreateDTO
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
@@ -41,7 +41,7 @@ class CampaignCreateFullTask:
         rabbitmq_message = RabbitJobResult(job_id=job_id).json()
         job_result: str = ""
 
-        user_auth_data: UserAuthDataDTO = await token_manager.auth_data_by_user_id(user_id)
+        user_auth_data: UnofficialUserAuthDataDTO = await token_manager.auth_data_by_user_id_unofficial(user_id)
 
         campaign_adapter.auth_data = user_auth_data
 
