@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from httpx import HTTPStatusError
 from pydantic import ValidationError, parse_obj_as
 
@@ -7,6 +9,7 @@ from dto.official.stake import (
     ActualStakeDTO,
     ActualStakesDTO,
     CampaignDTO,
+    CampaignInfoDTO,
     CampaignsDTO,
     CampaignStatus,
     CampaignType,
@@ -211,4 +214,27 @@ class StakeAdapter(WBAdapter):
             raise WBAError(
                 status_code=e.response.status_code,
                 description="Ошибка изменения интервала показа РК.",
+            ) from e
+
+    async def campaign(self, id: int) -> CampaignInfoDTO | None:
+        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/advert"
+
+        params = {"id": id}
+        try:
+            result = await self._get(url=url, params=params)
+            result.raise_for_status()
+            if result.status_code == HTTPStatus.NO_CONTENT:
+                return None
+            data = result.json()
+            return CampaignInfoDTO.parse_obj(data) if data else None
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description=f"Ошибка при получении информации о рекламной кампании. wb_campaign_id={id}.",
+            ) from e
+        except ValidationError as e:
+            logger.error("Не удалось обработать данные, полученные в ответ на запрос.")
+            logger.error(f"error={e.errors()}")
+            raise WBAError(
+                description=f"Ошибка при получении информации о рекламной кампании. wb_campaign_id={id}.",
             ) from e

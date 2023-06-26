@@ -55,6 +55,29 @@ class CampaignDTO(BaseOrjsonModel):
     endTime: datetime
 
 
+class CampaignInterval(BaseOrjsonModel):
+    Begin: int
+    End: int
+
+
+class NMS(BaseOrjsonModel):
+    nm: int
+    active: bool
+
+
+class CampaignParam(BaseOrjsonModel):
+    subjectName: str
+    intervals: list[CampaignInterval] | None
+    price: int
+    menuId: int | None = None
+    nms: list[NMS]
+
+
+class CampaignInfoDTO(CampaignDTO):
+    name: str
+    params: list[CampaignParam]
+
+
 class CampaignsDTO(BaseOrjsonModel):
     campaigns: list[CampaignDTO]
 

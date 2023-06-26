@@ -5,11 +5,13 @@ from fastapi.responses import ORJSONResponse, Response
 from fastapi.routing import APIRouter
 
 from core.settings import logger
-from dto.official.stake import CampaignsDTO, CampaignStatus, CampaignType
+from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType
 from exceptions.base import WBAError
 from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
 from schemas.v1.stake import (
     ActualStakes,
+    CampaignInfo,
+    CampaignResponse,
     Campaigns,
     CampaignsResponse,
     IntervalsRequest,
@@ -42,7 +44,7 @@ async def actual_stakes(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(content=BaseResponseError(description="Ошибка при получении актуальных ставок.").dict())
 
     if stakes.adverts is None:
@@ -70,7 +72,7 @@ async def products_by_region(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(
             content=BaseResponseError(description="Ошибка при получении информации о продуктах в регионе.")
         )
@@ -105,7 +107,7 @@ async def organic_by_region(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(content=BaseResponseError())
 
     if organic.time1 is None:
@@ -141,7 +143,7 @@ async def set_new_rate(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(
             content=BaseResponseError(
                 description=f"Ошибка при установке нового значения ставки на торгах. wb_campaign_id={wb_campaign_id}"
@@ -172,7 +174,7 @@ async def pause_campaign(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(
             content=BaseResponseError(
                 description=f"Ошибка при постановке кампании на паузу. wb_campaign_id={wb_campaign_id}"
@@ -201,7 +203,7 @@ async def resume_campaign(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(
             content=BaseResponseError(
                 description=f"Ошибка при возобновлении кампании. wb_campaign_id={wb_campaign_id}"
@@ -233,7 +235,7 @@ async def campaigns(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(
             content=BaseResponseError(
                 description=f"Ошибка при получении списка рекламных кампаний. user_id={user_id}"
@@ -270,7 +272,7 @@ async def intervals(
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
-        logger.exception(e)
+        logger.error(e)
         return ORJSONResponse(
             content=BaseResponseError(
                 description="Ошибка при установке временных интервалов. user_id={0}, wb_campaign_id={1}".format(
@@ -279,3 +281,33 @@ async def intervals(
                 )
             ).dict()
         )
+
+
+@router.get(
+    path="/campaign",
+    responses={
+        status.HTTP_200_OK: {"model": CampaignResponse},
+    },
+    summary="Метод для получения информации о рекламнйо кампании.",
+    description="Метод позволяет позволяет получить информацию о рекламных кампаний по id.",
+)
+async def campaign(
+    user_id: uuid.UUID,
+    campaign_id: int,
+    stake_service: StakeService = Depends(get_stake_service),
+) -> Response:
+    try:
+        campaign: CampaignInfoDTO | None = await stake_service.campaign(user_id=user_id, campaign_id=campaign_id)
+    except WBAError as e:
+        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
+    except Exception as e:
+        logger.error(e)
+        return ORJSONResponse(
+            content=BaseResponseError(
+                description=f"Ошибка при получении списка рекламных кампаний. user_id={user_id}"
+            ).dict()
+        )
+    if not campaign:
+        return ORJSONResponse(content=BaseResponseEmpty().dict())
+
+    return ORJSONResponse(content=CampaignResponse(payload=CampaignInfo.parse_obj(campaign)).dict())

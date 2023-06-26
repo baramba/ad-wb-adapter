@@ -10,7 +10,7 @@ from depends.adapters.official.stake import get_stake_adapter
 from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
-from dto.official.stake import CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
+from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
 from dto.token import OfficialUserAuthDataDTO
 from dto.unofficial.campaign import CampaignConfigDTO
 from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
@@ -96,6 +96,11 @@ class StakeService:
         auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
         self.stake_adapter.auth_data = auth_data
         return await self.stake_adapter.campaigns(type=type, status=status)
+
+    async def campaign(self, user_id: uuid.UUID, campaign_id: int) -> CampaignInfoDTO | None:
+        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
+        self.stake_adapter.auth_data = auth_data
+        return await self.stake_adapter.campaign(id=campaign_id)
 
     async def set_time_intervals(
         self,

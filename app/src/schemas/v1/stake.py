@@ -77,12 +77,38 @@ class Campaign(BaseOrjsonModel):
     endTime: datetime
 
 
+class CampaignInterval(BaseOrjsonModel):
+    Begin: int
+    End: int
+
+
+class NMS(BaseOrjsonModel):
+    nm: int
+    active: bool
+
+
+class CampaignParam(BaseOrjsonModel):
+    subjectName: str
+    intervals: list[CampaignInterval] | None
+    price: int
+    menuId: int | None
+    nms: list[NMS]
+
+
+class CampaignInfo(Campaign):
+    params: list[CampaignParam]
+
+
 class Campaigns(BaseOrjsonModel):
     campaigns: list[Campaign]
 
 
 class CampaignsResponse(BaseResponseSuccess):
     payload: Campaigns | None
+
+
+class CampaignResponse(BaseResponseSuccess):
+    payload: CampaignInfo | None
 
 
 class IntervalsRequest(BaseOrjsonModel):
