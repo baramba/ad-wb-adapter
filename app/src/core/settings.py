@@ -21,7 +21,7 @@ class Redis(BaseSettings):
 
 
 class Wildberries(BaseSettings):
-    OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0/"
+    OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0"
 
 
 class RabbitMQ(BaseSettings):
@@ -36,10 +36,15 @@ class RabbitMQ(BaseSettings):
         env_prefix = "RABBITMQ_"
 
 
+class WBAdapter(BaseSettings):
+    MAX_RETRY_TIME: int = 10
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "wb-adapter"
     REDIS: Redis = Redis()
     RABBITMQ: RabbitMQ = RabbitMQ()
+    WBADAPTER: WBAdapter = WBAdapter()
     WILDBERRIES: Wildberries = Wildberries()
     LOG_LEVEL: str = "INFO"
     BASE_DIR = Path(__file__).absolute().parent.parent

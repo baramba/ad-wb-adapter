@@ -12,7 +12,7 @@ from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
 from dto.job_result import RabbitJobResult
-from dto.token import WbUserAuthDataDTO
+from dto.token import UnofficialUserAuthDataDTO
 from dto.unofficial.campaign import CampaignCreateDTO
 from exceptions.base import WBAErrorNotAuth
 from schemas.v1.base import JobResult
@@ -44,7 +44,7 @@ class CampaignCreateFullTask:
         rabbitmq_message = RabbitJobResult(job_id=job_id).json()
         job_result: str = ""
 
-        user_auth_data: WbUserAuthDataDTO = await token_manager.auth_data_by_user_id(user_id)
+        user_auth_data: UnofficialUserAuthDataDTO = await token_manager.auth_data_by_user_id_unofficial(user_id)
 
         campaign_adapter.auth_data = user_auth_data
 
@@ -58,7 +58,7 @@ class CampaignCreateFullTask:
                 user_id=user_id, wb_token_access=user_auth_data.wb_token_access
             )
             await asyncio.sleep(10)
-            user_auth_data = await token_manager.auth_data_by_user_id(user_id)
+            user_auth_data = await token_manager.auth_data_by_user_id_unofficial(user_id)
             campaign_adapter.auth_data = user_auth_data
             wb_campaign_id = await campaign_adapter.create_campaign(
                 name=campaign.name,

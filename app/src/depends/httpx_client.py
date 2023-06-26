@@ -11,7 +11,5 @@ async def get_http_client() -> httpx.AsyncClient:
             "http://": settings.PROXY_URL,
             "https://": settings.PROXY_URL,
         }
-
-    client = httpx.AsyncClient(proxies=proxies)  # type: ignore [arg-type]
-
-    return client
+    transport = httpx.AsyncHTTPTransport(retries=3)
+    return httpx.AsyncClient(proxies=proxies, transport=transport)  # type: ignore [arg-type]

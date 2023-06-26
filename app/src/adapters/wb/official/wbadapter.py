@@ -1,7 +1,7 @@
 import httpx
 
 from adapters.wb.wbadapter import BaseWBAdapter
-from dto.token import WbUserAuthDataDTO
+from dto.token import OfficialUserAuthDataDTO, UserAuthDataBase
 
 
 class WBAdapter(BaseWBAdapter):
@@ -9,13 +9,14 @@ class WBAdapter(BaseWBAdapter):
         super().__init__(http_client=http_client)
         self.headers: dict = {}
         self.cookies: dict = {}
+        self._auth_data: OfficialUserAuthDataDTO | None = None
 
     @property
-    def auth_data(self) -> WbUserAuthDataDTO | None:
-        return super()._auth_data
+    def auth_data(self) -> UserAuthDataBase | None:
+        return self._auth_data
 
     @auth_data.setter
-    def auth_data(self, auth_data: WbUserAuthDataDTO) -> None:
+    def auth_data(self, auth_data: OfficialUserAuthDataDTO) -> None:
         self._auth_data = auth_data
         self.headers["Authorization"] = auth_data.wb_token_ad
 

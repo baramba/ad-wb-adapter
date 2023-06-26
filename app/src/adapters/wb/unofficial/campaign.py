@@ -2,7 +2,6 @@ import asyncio
 import collections
 import math
 
-import backoff
 from httpx import HTTPStatusError
 
 from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
@@ -13,7 +12,6 @@ from exceptions.campaign import CampaignCreateError, CampaignInitError, Campaign
 
 
 class CampaignAdapterUnofficial(WBAdapterUnofficial):
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def get_subject_id(self, nms: int) -> int:
         url: str = "https://card.wb.ru/cards/detail"
 
@@ -32,7 +30,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         subject_id: int = result.json()["data"]["products"][0]["subjectId"]
         return subject_id
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def get_category(self, nms: int) -> str:
         subject_id: int = await self.get_subject_id(nms=nms)
 
@@ -66,7 +63,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
 
         return category
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def create_campaign(
         self,
         name: str,
@@ -97,7 +93,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
 
         return int(result.json()["id"])
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def get_campaign_budget(
         self,
         id: int,
@@ -118,7 +113,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
             ) from e
         return int(result.json()["total"])
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def add_keywords_to_campaign(
         self,
         id: int,
@@ -140,7 +134,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 error_class=CampaignInitError,
             ) from e
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def switch_on_fixed_list(
         self,
         id: int,
@@ -159,7 +152,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 error_class=CampaignInitError,
             ) from e
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def replenish_budget(
         self,
         id: int,
@@ -194,7 +186,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 error_class=CampaignInitError,
             ) from e
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def get_campaign_config(self, id: int) -> CampaignConfigDTO:
         """Возвращает текущию конфигурацию компании."""
         url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/placement"
@@ -212,7 +203,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
 
         return CampaignConfigDTO.parse_obj(result.json())
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def start_campaign(self, id: int) -> None:
         """Запускает рекламную кампанию.
 
@@ -246,7 +236,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 error_class=CampaignStartError,
             ) from e
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def update_campaign_config(self, id: int, config: CampaignConfigDTO) -> None:
         """Обновляет конфигурацию кампании.
 
@@ -272,7 +261,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 error_class=WBAError,
             ) from e
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=3)
     async def update_campaign_rate(self, id: int, config: CampaignConfigDTO) -> None:
         """Устанавливает новое значение ставки рекламной кампании.
 
@@ -298,7 +286,6 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 error_class=WBAError,
             ) from e
 
-    @backoff.on_exception(wait_gen=backoff.constant, exception=WBAError, max_tries=5)
     async def pause_campaign(self, id: int) -> CampaignStatus:
         """Ставит рекламную кампанию на паузу.
 
