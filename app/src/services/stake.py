@@ -6,13 +6,13 @@ from adapters.token import TokenManager
 from adapters.wb.official.stake import StakeAdapter
 from adapters.wb.unofficial.campaign import CampaignAdapterUnofficial
 from adapters.wb.unofficial.stake import StakeAdapterUnofficial
+from core.settings import logger
 from depends.adapters.official.stake import get_stake_adapter
 from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
 from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
 from dto.token import OfficialUserAuthDataDTO
-from dto.unofficial.campaign import CampaignConfigDTO
 from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
 
 
@@ -63,9 +63,15 @@ class StakeService:
         self.campaign_adapter_unofficial.auth_data = auth_data
 
         # TODO: убрать после добавления subject_id в доменную модель campaign manager
+        if param:
+            await self.stake_adapter.change_rate(advert_id=wb_campaign_id, cpm=rate, param=param, type=ad_type)
+        elif campaign := await self.stake_adapter.campaign(id=wb_campaign_id):
+            if campaign.params and campaign.params[0].subjectId:
+                subject_id = campaign.params[0].subjectId
+                param = subject_id
         if not param:
-            config: CampaignConfigDTO = await self.campaign_adapter_unofficial.get_campaign_config(id=wb_campaign_id)
-            param = config.place[0].subjectId
+            logger.error(f"Не удалось получить subject_id. wb_campaign_id={wb_campaign_id}")
+            return
 
         await self.stake_adapter.change_rate(advert_id=wb_campaign_id, cpm=rate, param=param, type=ad_type)
 
@@ -114,9 +120,16 @@ class StakeService:
         self.campaign_adapter_unofficial.auth_data = auth_data
 
         # TODO: убрать после добавления subject_id в доменную модель campaign manager
+        if param:
+            await self.stake_adapter.set_time_intervals(wb_campaign_id=wb_campaign_id, intervals=intervals, param=param)
+        elif campaign := await self.stake_adapter.campaign(id=wb_campaign_id):
+            if campaign.params and campaign.params[0].subjectId:
+                subject_id = campaign.params[0].subjectId
+                param = subject_id
         if not param:
-            config: CampaignConfigDTO = await self.campaign_adapter_unofficial.get_campaign_config(id=wb_campaign_id)
-            param = config.place[0].subjectId
+            logger.error(f"Не удалось получить subject_id. wb_campaign_id={wb_campaign_id}")
+            return
+
         await self.stake_adapter.set_time_intervals(wb_campaign_id=wb_campaign_id, intervals=intervals, param=param)
 
 

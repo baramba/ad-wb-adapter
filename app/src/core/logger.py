@@ -5,7 +5,8 @@ from pydantic import BaseModel
 
 class LogConfig(BaseModel):
     logger_name: str = "ad-logger"
-    log_format: str = "%(asctime)s.%(msecs)03d %(levelname)-6s %(path)-30s  %(message)s"
+    log_format: str = "%(levelname)-6s %(path)-30s  %(message)s"
+    # log_format: str = "%(asctime)s.%(msecs)03d %(levelname)-6s %(path)-30s  %(message)s"
     log_level: str = "INFO"
 
     version: int = 1
@@ -19,7 +20,8 @@ class LogConfig(BaseModel):
         },
         "root": {
             "class": "logging.Formatter",
-            "format": "%(asctime)s.%(msecs)03d %(levelname)-6s %(module)s.%(funcName)s  %(message)s",
+            # "format": "%(asctime)s.%(msecs)03d %(levelname)-6s %(module)s.%(funcName)s  %(message)s",
+            "format": "%(levelname)-6s %(module)s.%(funcName)s %(message)s",
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     }

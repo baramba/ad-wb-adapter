@@ -288,8 +288,9 @@ async def intervals(
     responses={
         status.HTTP_200_OK: {"model": CampaignResponse},
     },
-    summary="Метод для получения информации о рекламнйо кампании.",
-    description="Метод позволяет позволяет получить информацию о рекламных кампаний по id.",
+    summary="Метод для получения информации о рекламной кампании.",
+    description="""Метод позволяет позволяет получить информацию о рекламной кампании по id.
+    <a href="https://openapi.wildberries.ru/#tag/Reklama/paths/~1adv~1v0~1advert/get">Ссылка на описание.</a>""",
 )
 async def campaign(
     user_id: uuid.UUID,

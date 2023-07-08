@@ -88,15 +88,20 @@ class NMS(BaseOrjsonModel):
 
 
 class CampaignParam(BaseOrjsonModel):
-    subjectName: str
     intervals: list[CampaignInterval] | None
     price: int
-    menuId: int | None
     nms: list[NMS]
+    active: bool | None
+    menuId: int | None
+    menuName: str | None
+    subjectName: str | None
+    subjectId: int | None
+    setId: int | None
+    setName: str | None
 
 
 class CampaignInfo(Campaign):
-    params: list[CampaignParam]
+    params: list[CampaignParam] | None
 
 
 class Campaigns(BaseOrjsonModel):
