@@ -2,8 +2,7 @@ from logging.config import dictConfig
 
 from arq.connections import RedisSettings
 
-from core.logger import logging_conf
-from core.settings import logger, settings
+from core.settings import log_config, logger, settings
 from depends import shutdown as sd
 from depends import startup as su
 from tasks import tasks
@@ -11,8 +10,8 @@ from tasks import tasks
 
 async def startup(ctx: dict) -> None:
     # Переопределяем настройки логирования для arc
-    dictConfig(config=logging_conf.dict())
-    logger.setLevel(settings.LOG_LEVEL)
+    dictConfig(config=log_config)
+    logger.setLevel(settings.WBADAPTER.LOG_LEVEL)
     await su.startup()
 
 

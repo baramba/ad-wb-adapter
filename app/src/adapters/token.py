@@ -34,15 +34,15 @@ class TokenManager:
                 user_id=str(user_id),
             )
         except ConnectError as e:
-            logger.error(f"Не удалось подключиться к token manager ({self.url}). error: {e}")
+            logger.error(f"Could not connect to token manager ({self.url}). error: {e}")
 
         if not auth_data or isinstance(auth_data, HTTPValidationError):
-            logger.error(f"Ошибка при получении авторизационных данных. user_id={user_id}")
+            logger.error(f"An error occurred while obtaining authorization data. user_id={user_id}")
             raise WBAError(
-                description=f"Ошибка при получении авторизационных данных пользователя user_id={user_id}",
+                description=f"An error occurred while obtaining authorization data, user_id={user_id}",
             )
         logger.debug(
-            "Получены авторизационные данные - user_id:{0}, wb_supplier_id: {1}, wb_user_id:{2}".format(
+            "Authorization data received - user_id:{0}, wb_supplier_id: {1}, wb_user_id:{2}".format(
                 user_id,
                 auth_data.wb_supplier_id,
                 auth_data.wb_user_id,
@@ -64,7 +64,7 @@ class TokenManager:
         except ValidationError as e:
             logger.error(e.errors())
             raise WBAError(
-                description=f"Не найден wb_token_ad для пользователя user_id={user_id}.",
+                description=f"Can't find wb_token_ad for user_id={user_id}.",
             ) from e
 
     async def auth_data_by_user_id_unofficial(self, user_id: uuid.UUID) -> UnofficialUserAuthDataDTO:
@@ -74,7 +74,7 @@ class TokenManager:
         except ValidationError as e:
             logger.error(e.errors())
             raise WBAError(
-                description=f"Не найдены авторизационные данные для пользователя user_id={user_id}.",
+                description=f"Can't find authorization data for user_id={user_id}.",
             ) from e
 
     async def request_update_user_access_token(self, user_id: uuid.UUID, wb_token_access: str) -> None:
@@ -83,4 +83,4 @@ class TokenManager:
             user_id=str(user_id),
             wb_token_access=wb_token_access,
         )
-        logger.debug(f"Отправлен запрос на обновление wb_token_access для user_id:{user_id}.")
+        logger.debug(f"Send request to update wb_token_access for user_id:{user_id}.")

@@ -22,7 +22,7 @@ class StakeAdapter(WBAdapter):
     async def actual_stakes(self, type: int, param: int) -> ActualStakesDTO:
         """Метод возвращает список актуальных ставок по ключевой фразе."""
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/cpm"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/cpm"
         params = {
             "type": type,
             "param": param,
@@ -55,7 +55,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/cpm"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/cpm"
 
         body = {
             "advertId": advert_id,
@@ -83,7 +83,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/start"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/start"
 
         params = {"id": id}
 
@@ -106,7 +106,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/pause"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/pause"
 
         params = {"id": id}
 
@@ -156,7 +156,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/adverts"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/adverts"
 
         params = {
             "status": status,
@@ -200,7 +200,7 @@ class StakeAdapter(WBAdapter):
         Raises:
             WBAError: _description_
         """
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/intervals"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/intervals"
         body = {
             "advertId": wb_campaign_id,
             "intervals": [interval.dict() for interval in intervals],
@@ -217,7 +217,7 @@ class StakeAdapter(WBAdapter):
             ) from e
 
     async def campaign(self, id: int) -> CampaignInfoDTO | None:
-        url = f"{settings.WILDBERRIES.OFFICIAL_API_ADV_URL}/advert"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/advert"
 
         params = {"id": id}
         try:

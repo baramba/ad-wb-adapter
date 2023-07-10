@@ -1,6 +1,11 @@
+from uuid import uuid4
+
+from asgi_correlation_id import CorrelationIdMiddleware
+from asgi_correlation_id.middleware import is_valid_uuid4
 from fastapi import FastAPI
 
 from core.settings import settings
+from core.utils.extra_log_params_middleware import LogExtraParamsMiddleware
 from depends import shutdown as sd
 from depends import startup as su
 from routers import metadata, v1
@@ -13,6 +18,14 @@ app = FastAPI(
     description=metadata.description,
     root_path=settings.CONTEXT,
 )
+app.add_middleware(
+    CorrelationIdMiddleware,
+    header_name="X-Request-Id",
+    update_request_header=True,
+    generator=lambda: uuid4().hex,
+    validator=is_valid_uuid4,
+)
+app.add_middleware(LogExtraParamsMiddleware)
 
 
 @app.on_event("startup")
@@ -30,7 +43,7 @@ async def root() -> dict[str, dict]:
     return {
         "message": {
             "Project": settings.PROJECT_NAME,
-            "Path": settings.BASE_DIR,
+            "Path": settings.WBADAPTER.BASE_DIR,
         },
     }
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import AnyHttpUrl, BaseSettings, Field
 
-from core.logger import logging_conf
+from core.logger import LogConfig
 
 
 class Redis(BaseSettings):
@@ -18,10 +18,6 @@ class Redis(BaseSettings):
 
     def build_url(self) -> str:
         return f"redis://{self.HOST}:{self.PORT}/{self.DATABASE}"
-
-
-class Wildberries(BaseSettings):
-    OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0"
 
 
 class RabbitMQ(BaseSettings):
@@ -38,6 +34,14 @@ class RabbitMQ(BaseSettings):
 
 class WBAdapter(BaseSettings):
     MAX_RETRY_TIME: int = 10
+    WB_OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0"
+    BASE_DIR = Path(__file__).absolute().parent.parent
+    PROXY_URL: AnyHttpUrl | None = None
+    LOG_FORMAT: str = "json"
+    LOG_LEVEL: str = "INFO"
+
+    class Config:
+        env_prefix = "WBADAPTER_"
 
 
 class Settings(BaseSettings):
@@ -45,17 +49,21 @@ class Settings(BaseSettings):
     REDIS: Redis = Redis()
     RABBITMQ: RabbitMQ = RabbitMQ()
     WBADAPTER: WBAdapter = WBAdapter()
-    WILDBERRIES: Wildberries = Wildberries()
-    LOG_LEVEL: str = "INFO"
-    BASE_DIR = Path(__file__).absolute().parent.parent
+
     TOKEN_MANAGER_URL: AnyHttpUrl = Field(default="http://token_manager:8888")
-    PROXY_URL: AnyHttpUrl | None = None
+
     CONTEXT: str = "/api/ad"
 
 
 settings = Settings()
 
-dictConfig(config=logging_conf.dict())
+log_config = LogConfig().dict()
+for handler in log_config["handlers"].values():
+    handler["formatter"] = settings.WBADAPTER.LOG_FORMAT
 
-logger: logging.Logger = logging.getLogger(logging_conf.logger_name)
-logger.setLevel(settings.LOG_LEVEL)
+
+dictConfig(config=log_config)
+
+logger: logging.Logger = logging.getLogger(log_config["logger_name"])
+
+logger.setLevel(settings.WBADAPTER.LOG_LEVEL)

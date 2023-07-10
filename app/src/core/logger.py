@@ -4,72 +4,80 @@ from pydantic import BaseModel
 
 
 class LogConfig(BaseModel):
-    logger_name: str = "ad-logger"
-    log_format: str = "%(levelname)-6s %(path)-30s  %(message)s"
-    # log_format: str = "%(asctime)s.%(msecs)03d %(levelname)-6s %(path)-30s  %(message)s"
+    logger_name: str = "wbadapter-logger"
+    log_format: str = "%(asctime)s.%(msecs)03d %(levelname)-6s [%(correlation_id)s] %(logger_name)-30s  %(message)s"
     log_level: str = "INFO"
-
     version: int = 1
     disable_existing_loggers: bool = False
 
+    logger = {
+        "handlers": ["ad"],
+        "level": log_level,
+        "propagate": False,
+    }
+
+    filters = {
+        "extra_log_params": {"()": "core.utils.filters.ExtraParamsFilter"},
+    }
+
     formatters = {
         "default": {
+            "()": "core.utils.formatter.VerboseJSONFormatter",
+        },
+        "text": {
             "class": "logging.Formatter",
             "format": log_format,
             "datefmt": "%Y-%m-%d %H:%M:%S",
         },
+        "json": {
+            "()": "core.utils.formatter.VerboseJSONFormatter",
+        },
         "root": {
-            "class": "logging.Formatter",
-            # "format": "%(asctime)s.%(msecs)03d %(levelname)-6s %(module)s.%(funcName)s  %(message)s",
-            "format": "%(levelname)-6s %(module)s.%(funcName)s %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "()": "core.utils.formatter.VerboseJSONFormatter",
         },
     }
+
     handlers = {
-        "ad.console": {
+        "ad": {
             "class": "logging.StreamHandler",
             "formatter": "default",
+            "filters": ["extra_log_params"],
             "stream": "ext://sys.stdout",
         },
-        "root.console": {
+        "root": {
             "class": "logging.StreamHandler",
             "formatter": "root",
             "stream": "ext://sys.stdout",
         },
     }
+
     root = {
         "level": "INFO",
-        "formatter": ["root"],
-        "handlers": ["root.console"],
+        "formatter": "root",
+        "handlers": ["root"],
     }
 
     loggers = {
-        logger_name: {
-            "handlers": ["ad.console"],
-            "level": log_level,
-            "propagate": False,
-        },
-        "arq": {
-            "handlers": ["ad.console"],
-            "level": log_level,
-            "propagate": False,
-        },
+        logger_name: logger,
+        "arq": logger,
+        "uvicorn": logger,
+        "gunicorn": logger,
+        "gunicorn.access": logger,
+        "gunicorn.error": logger,
     }
-
-
-logging_conf = LogConfig()
 
 
 factory = logging.getLogRecordFactory()
 
 
-# добавляем LogRecord  аттрибут path
+# добавляем LogRecord  аттрибут logger_name
 def record_factory(*args: tuple, **kwargs: dict) -> logging.LogRecord:
     record = factory(*args, **kwargs)
     # превращаем /path/to/file.py в path.to.file
     path_parts = record.pathname.split("/")
     path_parts[-1] = path_parts[-1].split(".")[0]
-    record.path = ".".join(path_parts[-4:])
+    record.logger_name = ".".join(path_parts[-3:])
+
     return record
 
 
