@@ -13,7 +13,7 @@ from depends.db.redis import get_redis
 from depends.services.queue import get_queue_service
 from dto.job_result import RabbitJobResult
 from dto.token import UnofficialUserAuthDataDTO
-from dto.unofficial.campaign import CampaignCreateDTO
+from dto.unofficial.campaign import CampaignCreateDTO, ReplenishBugetRequestDTO, ReplenishSourceType
 from exceptions.base import WBAErrorNotAuth
 from schemas.v1.base import JobResult
 from schemas.v1.campaign import CreateCampaignResponse
@@ -66,7 +66,10 @@ class CampaignCreateFullTask:
             )
 
         try:
-            await campaign_adapter.replenish_budget(id=wb_campaign_id, amount=campaign.budget)
+            replenish = ReplenishBugetRequestDTO(
+                wb_campaign_id=wb_campaign_id, amount=campaign.budget, type=ReplenishSourceType.ACCOUNT
+            )
+            await campaign_adapter.replenish_budget(replenish)
             await campaign_adapter.add_keywords_to_campaign(id=wb_campaign_id, keywords=campaign.keywords)
             await campaign_adapter.switch_on_fixed_list(id=wb_campaign_id)
             await campaign_adapter.start_campaign(id=wb_campaign_id)

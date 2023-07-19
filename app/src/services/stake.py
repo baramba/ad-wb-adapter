@@ -7,13 +7,14 @@ from adapters.wb.official.stake import StakeAdapter
 from adapters.wb.unofficial.campaign import CampaignAdapterUnofficial
 from adapters.wb.unofficial.stake import StakeAdapterUnofficial
 from core.settings import logger
+from core.utils.context import AppContext
 from depends.adapters.official.stake import get_stake_adapter
 from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
 from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
 from dto.token import OfficialUserAuthDataDTO
-from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
+from dto.unofficial.stake import ActualStakesDTO, BalanceDTO, OrganicDTO, ProductsDTO
 
 
 class StakeService:
@@ -58,9 +59,8 @@ class StakeService:
         ad_type: int,
         param: int | None = None,
     ) -> None:
-        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
-        self.stake_adapter.auth_data = OfficialUserAuthDataDTO(wb_token_ad=auth_data.wb_token_ad)
-        self.campaign_adapter_unofficial.auth_data = auth_data
+        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
+        self.stake_adapter.auth_data = auth_data
 
         # TODO: убрать после добавления subject_id в доменную модель campaign manager
         if param:
@@ -70,7 +70,7 @@ class StakeService:
                 subject_id = campaign.params[0].subjectId
                 param = subject_id
         if not param:
-            logger.error(f"Не удалось получить subject_id. wb_campaign_id={wb_campaign_id}")
+            logger.error(f"Could not get subject_id. wb_campaign_id={wb_campaign_id}")
             return
 
         await self.stake_adapter.change_rate(advert_id=wb_campaign_id, cpm=rate, param=param, type=ad_type)
@@ -131,6 +131,11 @@ class StakeService:
             return
 
         await self.stake_adapter.set_time_intervals(wb_campaign_id=wb_campaign_id, intervals=intervals, param=param)
+
+    async def balance(self) -> BalanceDTO:
+        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(AppContext.user_id())
+        self.stake_adapter.auth_data = OfficialUserAuthDataDTO(wb_token_ad=auth_data.wb_token_ad)
+        return await self.stake_adapter.balance()
 
 
 async def get_stake_service(

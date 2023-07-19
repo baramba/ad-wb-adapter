@@ -1,6 +1,8 @@
 import uuid
 from typing import TypeVar
 
+from pydantic import Field
+
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import BaseResponseSuccess
 
@@ -19,3 +21,16 @@ class WBToken(BaseOrjsonModel):
 
 class WBTokenResponse(BaseResponseSuccess):
     payload: WBToken
+
+
+class Balance(BaseOrjsonModel):
+    # Счёт, рублей
+    account: int = Field(description="Счёт, рублей")
+    # Баланс, рублей
+    balance: int = Field(description="Баланс, рублей")
+    # Бонусы, рублей
+    bonus: int | None = Field(description="Бонусы, рублей")
+
+
+class BalanceResponse(BaseResponseSuccess):
+    payload: Balance

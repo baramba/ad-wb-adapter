@@ -1,0 +1,7 @@
+{
+    "exclude": [
+        "**/mypy*",
+        "**/__pycache__",
+        "app/src/adapter/gen/token/token",
+    ],
+}

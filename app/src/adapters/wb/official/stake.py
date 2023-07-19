@@ -15,6 +15,7 @@ from dto.official.stake import (
     CampaignType,
     IntervalDTO,
 )
+from dto.unofficial.stake import BalanceDTO
 from exceptions.base import WBAError
 
 
@@ -22,7 +23,7 @@ class StakeAdapter(WBAdapter):
     async def actual_stakes(self, type: int, param: int) -> ActualStakesDTO:
         """Метод возвращает список актуальных ставок по ключевой фразе."""
 
-        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/cpm"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/cpm"
         params = {
             "type": type,
             "param": param,
@@ -55,7 +56,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/cpm"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/cpm"
 
         body = {
             "advertId": advert_id,
@@ -83,7 +84,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/start"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/start"
 
         params = {"id": id}
 
@@ -106,7 +107,7 @@ class StakeAdapter(WBAdapter):
             WBAError: _description_
         """
 
-        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/pause"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/pause"
 
         params = {"id": id}
 
@@ -156,7 +157,7 @@ class StakeAdapter(WBAdapter):
             WBAError:
         """
 
-        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/adverts"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/adverts"
 
         params = {
             "status": status,
@@ -200,7 +201,7 @@ class StakeAdapter(WBAdapter):
         Raises:
             WBAError: _description_
         """
-        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/intervals"
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/intervals"
         body = {
             "advertId": wb_campaign_id,
             "intervals": [interval.dict() for interval in intervals],
@@ -217,7 +218,18 @@ class StakeAdapter(WBAdapter):
             ) from e
 
     async def campaign(self, id: int) -> CampaignInfoDTO | None:
-        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/advert"
+        """Метод позволяет получить информацию о рекламной кампании.
+
+        Arguments:
+            id -- идентификатор рекламной кампании
+
+        Raises:
+            WBAError: _description_
+
+        Returns:
+            Возвращает информацию о рекламной кампании или None, если она не была найдена.
+        """
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/advert"
 
         params = {"id": id}
         try:
@@ -237,4 +249,31 @@ class StakeAdapter(WBAdapter):
             logger.error(f"error={e.errors()}")
             raise WBAError(
                 description=f"Ошибка при получении информации о рекламной кампании. wb_campaign_id={id}.",
+            ) from e
+
+    async def balance(self) -> BalanceDTO:
+        """Метод позволяет получить информацию о балансе пользователя.
+
+        Raises:
+            WBAError: _description_
+
+        Returns:
+            Возвращает информацию о балансе пользователя.
+        """
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v1/balance"
+
+        try:
+            result = await self._get(url=url)
+            result.raise_for_status()
+            data = result.json()
+            return BalanceDTO.parse_obj(data)
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description="Ошибка при получении информации о балансе пользователя.",
+            ) from e
+        except ValidationError as e:
+            logger.error(f"Не удалось обработать данные, полученные в ответ на запрос. error={e.errors()}")
+            raise WBAError(
+                description="Ошибка при получении информации о балансе пользователя.",
             ) from e

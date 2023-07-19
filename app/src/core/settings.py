@@ -34,7 +34,7 @@ class RabbitMQ(BaseSettings):
 
 class WBAdapter(BaseSettings):
     MAX_RETRY_TIME: int = 10
-    WB_OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv/v0"
+    WB_OFFICIAL_API_ADV_URL = "https://advert-api.wb.ru/adv"
     BASE_DIR = Path(__file__).absolute().parent.parent
     PROXY_URL: AnyHttpUrl | None = None
     LOG_FORMAT: str = "json"

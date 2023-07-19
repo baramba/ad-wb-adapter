@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from uuid import UUID
 
 from dto.official.stake import CampaignType
@@ -46,3 +46,25 @@ class CampaignConfigDTO(BaseOrjsonModel):
     name: str
     status: int
     fixed: bool
+
+
+class ReplenishSourceType(IntEnum):
+    # баланс
+    BALANCE = 1
+    # счет
+    ACCOUNT = 0
+
+
+class ReplenishBugetRequestDTO(BaseOrjsonModel):
+    # идентификатор рекламной кампании WB
+    wb_campaign_id: int
+    # сумма пополнения
+    amount: int
+    # источник средств (счет, баланс)
+    type: ReplenishSourceType
+
+
+class BalanceDTO(BaseOrjsonModel):
+    balance: int
+    account: int
+    bonus: int | None

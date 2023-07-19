@@ -1,6 +1,6 @@
 import uuid
 from enum import Enum, IntEnum
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 from fastapi import Response
 from pydantic.generics import GenericModel
@@ -16,9 +16,9 @@ class RequestQueuedResponse(BaseOrjsonModel):
 
 class JobResult(GenericModel, Generic[T]):
     code: str
-    status_code: int = 200
-    text: Optional[str] = None
     response: T
+    status_code: int = 200
+    text: str | None = None
 
     class Config:
         extra = "allow"

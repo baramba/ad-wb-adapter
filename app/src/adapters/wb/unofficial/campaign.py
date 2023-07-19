@@ -6,7 +6,7 @@ from httpx import HTTPStatusError
 
 from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
 from adapters.wb.utils import error_for_raise
-from dto.unofficial.campaign import CampaignConfigDTO, CampaignStatus
+from dto.unofficial.campaign import CampaignConfigDTO, CampaignStatus, ReplenishBugetRequestDTO
 from exceptions.base import WBAError
 from exceptions.campaign import CampaignCreateError, CampaignInitError, CampaignStartError
 
@@ -105,13 +105,16 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         try:
             result = await self._get(url=url, headers=headers)
             result.raise_for_status()
+            total = int(result.json()["total"])
+            if isinstance(total, int):
+                return total
+            raise ValueError("Ошибка при получении бюджета компании. wb_campaign_id={id}")
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
                 description=f"Ошибка при получении бюджета компании. wb_campaign_id={id}",
                 error_class=CampaignInitError,
             ) from e
-        return int(result.json()["total"])
 
     async def add_keywords_to_campaign(
         self,
@@ -152,17 +155,15 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 error_class=CampaignInitError,
             ) from e
 
-    async def replenish_budget(
-        self,
-        id: int,
-        amount: int,
-    ) -> None:
+    async def replenish_budget(self, replenish: ReplenishBugetRequestDTO) -> None:
         """Увеличивает бюджет кампании до заданного значения с округлением в большую сторону."""
-        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{id}/budget/deposit"
-        headers = {"Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"}
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{replenish.wb_campaign_id}/budget/deposit"
+        headers = {
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{replenish.wb_campaign_id}"
+        }
 
-        budget_amount: int = await self.get_campaign_budget(id=id)
-        new_budget_amount: int = amount
+        budget_amount: int = await self.get_campaign_budget(id=replenish.wb_campaign_id)
+        new_budget_amount: int = replenish.amount
 
         if budget_amount >= new_budget_amount:
             return
@@ -170,7 +171,7 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         if budget_amount != 0:
             new_budget_amount = max(100, math.ceil(budget_amount / 50) * 50)
 
-        body = {"sum": new_budget_amount, "type": 0}
+        body = {"sum": new_budget_amount, "type": replenish.type}
 
         try:
             result = await self._post(
@@ -184,6 +185,29 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
                 status_code=e.response.status_code,
                 description=f"Ошибка при добавлении бюджета кампании. body={body}",
                 error_class=CampaignInitError,
+            ) from e
+
+    async def replenish_budget_at(self, replenish: ReplenishBugetRequestDTO) -> None:
+        """Увеличивает бюджет кампании на X рублей."""
+        url: str = f"https://cmp.wildberries.ru/backend/api/v2/search/{replenish.wb_campaign_id}/budget/deposit"
+        headers = {
+            "Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{replenish.wb_campaign_id}"
+        }
+
+        body = {"sum": replenish.amount, "type": replenish.type}
+
+        try:
+            result = await self._post(
+                url=url,
+                body=body,
+                headers=headers,
+            )
+            result.raise_for_status()
+        except HTTPStatusError as e:
+            raise error_for_raise(
+                status_code=e.response.status_code,
+                description=f"Ошибка при пополнении бюджета рекламной кампании. text = {e.response.content.decode()}",
+                error_class=WBAError,
             ) from e
 
     async def get_campaign_config(self, id: int) -> CampaignConfigDTO:
