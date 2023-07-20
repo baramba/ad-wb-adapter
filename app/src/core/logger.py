@@ -5,7 +5,9 @@ from pydantic import BaseModel
 
 class LogConfig(BaseModel):
     logger_name: str = "wbadapter-logger"
-    log_format: str = "%(asctime)s.%(msecs)03d %(levelname)-6s %(logger_name)-30s %(message)s"
+
+    log_format: str = "%(asctime)s.%(msecs)03d %(levelname)-6s %(logger_name)-25s %(funcName)-10s %(message)s"
+
     log_level: str = "INFO"
     version: int = 1
     disable_existing_loggers: bool = False

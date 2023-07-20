@@ -1,7 +1,6 @@
 from logging.config import dictConfig
 
 from arq.connections import RedisSettings
-
 from core.settings import log_config, logger, settings
 from depends import shutdown as sd
 from depends import startup as su

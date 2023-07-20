@@ -27,6 +27,8 @@ class CampaignType(IntEnum):
     CARD = 5
     SEARCH = 6
     RECOMMEND = 7
+    AUTO = 8
+    SEARCH_CATALOG = 9
 
 
 class CampaignStatus(IntEnum):

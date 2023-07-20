@@ -1,14 +1,13 @@
 from urllib.parse import quote
 
-from fastapi import status
-from httpx import HTTPStatusError
-from pydantic import ValidationError
-
 from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
 from adapters.wb.utils import error_for_raise
 from core.settings import logger
 from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
 from exceptions.base import WBAError
+from fastapi import status
+from httpx import HTTPStatusError
+from pydantic import ValidationError
 
 
 class StakeAdapterUnofficial(WBAdapterUnofficial):

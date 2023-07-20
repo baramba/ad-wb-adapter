@@ -201,6 +201,7 @@ class StakeAdapter(WBAdapter):
         Raises:
             WBAError: _description_
         """
+
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/intervals"
         body = {
             "advertId": wb_campaign_id,
@@ -229,6 +230,7 @@ class StakeAdapter(WBAdapter):
         Returns:
             Возвращает информацию о рекламной кампании или None, если она не была найдена.
         """
+
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/advert"
 
         params = {"id": id}
@@ -260,6 +262,7 @@ class StakeAdapter(WBAdapter):
         Returns:
             Возвращает информацию о балансе пользователя.
         """
+
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v1/balance"
 
         try:

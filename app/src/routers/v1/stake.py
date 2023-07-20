@@ -1,6 +1,7 @@
 import uuid
+from typing import Annotated
 
-from fastapi import Depends, Query, status
+from fastapi import Depends, Header, Query, status
 from fastapi.responses import ORJSONResponse, Response
 from fastapi.routing import APIRouter
 
@@ -225,13 +226,14 @@ async def resume_campaign(
     description="Метод позволяет позволяет получить список рекламных кампаний.",
 )
 async def campaigns(
-    user_id: uuid.UUID,
+    user_id: Annotated[uuid.UUID, Header()],
     stake_service: StakeService = Depends(get_stake_service),
     type: CampaignType | None = Query(None, description="Тип рекламной кампании."),
     status: CampaignStatus | None = Query(None, description="Статус рекламной кампании."),
+    limit: int | None = Query(None, description="Количество кампаний в ответе."),
 ) -> Response:
     try:
-        campaigns: CampaignsDTO | None = await stake_service.campaigns(user_id=user_id, status=status, type=type)
+        campaigns: CampaignsDTO | None = await stake_service.campaigns(status=status, type=type, limit=limit)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:

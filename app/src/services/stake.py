@@ -95,13 +95,13 @@ class StakeService:
 
     async def campaigns(
         self,
-        user_id: uuid.UUID,
         type: CampaignType | None,
         status: CampaignStatus | None,
+        limit: int | None = None,
     ) -> CampaignsDTO | None:
-        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
+        auth_data = await self.token_manager.auth_data_by_user_id_official(AppContext.user_id())
         self.stake_adapter.auth_data = auth_data
-        return await self.stake_adapter.campaigns(type=type, status=status)
+        return await self.stake_adapter.campaigns(type=type, status=status, limit=limit)
 
     async def campaign(self, user_id: uuid.UUID, campaign_id: int) -> CampaignInfoDTO | None:
         auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)

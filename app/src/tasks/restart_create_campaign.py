@@ -51,7 +51,9 @@ class CampaignCreateFullTask:
                 nms=campaign.nms,
             )
             replenish = ReplenishBugetRequestDTO(
-                wb_campaign_id=wb_campaign_id, amount=campaign.budget, type=ReplenishSourceType.ACCOUNT
+                wb_campaign_id=wb_campaign_id,
+                amount=campaign.budget,
+                type=ReplenishSourceType.ACCOUNT,
             )
             await campaign_adapter.replenish_budget(replenish)
             await campaign_adapter.add_keywords_to_campaign(id=wb_campaign_id, keywords=campaign.keywords)

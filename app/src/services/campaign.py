@@ -1,5 +1,3 @@
-from fastapi import Depends
-
 from adapters.token import TokenManager
 from adapters.wb.official.stake import StakeAdapter
 from adapters.wb.unofficial.campaign import CampaignAdapterUnofficial
@@ -9,6 +7,7 @@ from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from dto.token import OfficialUserAuthDataDTO
 from dto.unofficial.campaign import ReplenishBugetRequestDTO
+from fastapi import Depends
 
 
 class CampaignService:

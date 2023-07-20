@@ -1,12 +1,11 @@
 import uuid
 
-from fastapi import Depends
-
 from adapters.wb.official.stake import StakeAdapter
 from adapters.wb.unofficial.supplier import SupplierAdapter
 from depends.adapters.official.stake import get_stake_adapter
 from depends.adapters.unofficial.supplier import get_supplier_adapter_un
 from dto.unofficial.stake import BalanceDTO
+from fastapi import Depends
 
 
 class SupplierService:
