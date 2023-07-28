@@ -115,9 +115,8 @@ class StakeService:
         intervals: list[IntervalDTO],
         param: int | None,
     ) -> None:
-        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id)
-        self.stake_adapter.auth_data = OfficialUserAuthDataDTO(wb_token_ad=auth_data.wb_token_ad)
-        self.campaign_adapter_unofficial.auth_data = auth_data
+        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
+        self.stake_adapter.auth_data = auth_data
 
         # TODO: убрать после добавления subject_id в доменную модель campaign manager
         if param:

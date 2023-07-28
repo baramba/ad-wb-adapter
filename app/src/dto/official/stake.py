@@ -58,8 +58,8 @@ class CampaignDTO(BaseOrjsonModel):
 
 
 class CampaignInterval(BaseOrjsonModel):
-    Begin: int
-    End: int
+    begin: int
+    end: int
 
 
 class NMS(BaseOrjsonModel):

@@ -3,7 +3,7 @@ from enum import IntEnum, auto
 
 from pydantic import Field
 
-from dto.official.stake import CampaignStatus, CampaignType, IntervalDTO
+from dto.official.stake import CampaignInterval, CampaignStatus, CampaignType, IntervalDTO
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import BaseResponseSuccess
 
@@ -75,11 +75,6 @@ class Campaign(BaseOrjsonModel):
     changeTime: datetime
     startTime: datetime
     endTime: datetime
-
-
-class CampaignInterval(BaseOrjsonModel):
-    Begin: int
-    End: int
 
 
 class NMS(BaseOrjsonModel):
