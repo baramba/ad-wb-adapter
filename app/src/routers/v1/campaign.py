@@ -9,10 +9,12 @@ from core.settings import logger
 from depends.arq import get_arq
 from dto.unofficial.campaign import CampaignCreateDTO, ReplenishBugetRequestDTO, ReplenishSourceType
 from exceptions.base import WBAError
+from routers.utils import x_user_id
 from schemas.v1.base import BaseResponse, BaseResponseError, JobResult, RequestQueuedResponse
 from schemas.v1.campaign import Budget, CreateCampaignResponse, ReplenishBugetResponse
 from services.campaign import CampaignService, get_campaign_service
 from tasks.create_full_campaign import CampaignCreateFullTask
+from tasks.restart_create_campaign import СontinueCreateCampaignTask
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
@@ -28,7 +30,7 @@ router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 )
 async def create_full_campaign(
     campaign: CampaignCreateDTO,
-    user_id: Annotated[uuid.UUID, Header()],
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     routing_key: Annotated[str, Header()],
     arq: ArqRedis = Depends(get_arq),
 ) -> RequestQueuedResponse:
@@ -49,13 +51,13 @@ async def create_full_campaign(
     responses={
         status.HTTP_200_OK: {"model": ReplenishBugetResponse},
     },
-    description="Метод для пополнения бюджета кампании.",
-    summary="Метод позволяет пополнить бюджет рекламной кампании со счета или баланса пользователя.",
+    description="Метод позволяет пополнить бюджет рекламной кампании со счета или баланса пользователя.",
+    summary="Метод для пополнения бюджета кампании.",
 )
 async def deposit(
     wb_campaign_id: int,
     amount: int,
-    user_id: Annotated[uuid.UUID, Header()],
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     type: ReplenishSourceType = Query(description="0 - Счет, 1 - Баланс"),
     campaign_service: CampaignService = Depends(get_campaign_service),
 ) -> Response:
@@ -73,3 +75,32 @@ async def deposit(
                 description=f"Ошибка при пополнении бюджета рекламной кампании. wb_campaign_id={wb_campaign_id}"
             ).dict()
         )
+
+
+@router.put(
+    path="/continue",
+    responses={
+        status.HTTP_202_ACCEPTED: {"model": RequestQueuedResponse},
+        status.HTTP_201_CREATED: {"model": JobResult[CreateCampaignResponse]},
+    },
+    summary="Метод позволяет продолжить создание рекламной кампании на стороне wildberries.",
+    description="Возвращает 200 в случае успешного создания задачи.",
+)
+async def continue_create_campaign(
+    campaign: CampaignCreateDTO,
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
+    wb_campaign_id: int,
+    routing_key: Annotated[str, Header()],
+    arq: ArqRedis = Depends(get_arq),
+) -> RequestQueuedResponse:
+    job_id = uuid.uuid4()
+
+    await arq.enqueue_job(
+        СontinueCreateCampaignTask.continue_create_campaign.__qualname__,
+        job_id=job_id,
+        campaign=campaign,
+        routing_key=routing_key,
+        user_id=x_user_id,
+        wb_campaign_id=wb_campaign_id,
+    )
+    return RequestQueuedResponse(job_id=job_id)

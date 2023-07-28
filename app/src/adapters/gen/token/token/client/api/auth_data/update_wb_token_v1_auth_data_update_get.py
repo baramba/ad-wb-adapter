@@ -13,17 +13,17 @@ from ...types import UNSET, Response
 def _get_kwargs(
     *,
     client: Client,
-    user_id: str,
     wb_token_access: str,
+    x_user_id: str,
 ) -> Dict[str, Any]:
     url = "{}/v1/auth_data/update".format(client.base_url)
 
     headers: Dict[str, str] = client.get_headers()
     cookies: Dict[str, Any] = client.get_cookies()
 
-    params: Dict[str, Any] = {}
-    params["user_id"] = user_id
+    headers["x-user-id"] = x_user_id
 
+    params: Dict[str, Any] = {}
     params["wb_token_access"] = wb_token_access
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
@@ -66,16 +66,16 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 def sync_detailed(
     *,
     client: Client,
-    user_id: str,
     wb_token_access: str,
+    x_user_id: str,
 ) -> Response[Union[HTTPValidationError, StatusRequest]]:
     """Метод для обновления wb_token
 
      Метод для запроса на обновление wb_token.
 
     Args:
-        user_id (str):
         wb_token_access (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -87,8 +87,8 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         client=client,
-        user_id=user_id,
         wb_token_access=wb_token_access,
+        x_user_id=x_user_id,
     )
 
     response = httpx.request(
@@ -102,16 +102,16 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    user_id: str,
     wb_token_access: str,
+    x_user_id: str,
 ) -> Optional[Union[HTTPValidationError, StatusRequest]]:
     """Метод для обновления wb_token
 
      Метод для запроса на обновление wb_token.
 
     Args:
-        user_id (str):
         wb_token_access (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -123,24 +123,24 @@ def sync(
 
     return sync_detailed(
         client=client,
-        user_id=user_id,
         wb_token_access=wb_token_access,
+        x_user_id=x_user_id,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: Client,
-    user_id: str,
     wb_token_access: str,
+    x_user_id: str,
 ) -> Response[Union[HTTPValidationError, StatusRequest]]:
     """Метод для обновления wb_token
 
      Метод для запроса на обновление wb_token.
 
     Args:
-        user_id (str):
         wb_token_access (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -152,8 +152,8 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         client=client,
-        user_id=user_id,
         wb_token_access=wb_token_access,
+        x_user_id=x_user_id,
     )
 
     async with httpx.AsyncClient(verify=client.verify_ssl) as _client:
@@ -165,16 +165,16 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    user_id: str,
     wb_token_access: str,
+    x_user_id: str,
 ) -> Optional[Union[HTTPValidationError, StatusRequest]]:
     """Метод для обновления wb_token
 
      Метод для запроса на обновление wb_token.
 
     Args:
-        user_id (str):
         wb_token_access (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -187,7 +187,7 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
-            user_id=user_id,
             wb_token_access=wb_token_access,
+            x_user_id=x_user_id,
         )
     ).parsed

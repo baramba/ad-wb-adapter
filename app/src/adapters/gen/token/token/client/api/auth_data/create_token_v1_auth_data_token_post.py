@@ -1,45 +1,58 @@
 from http import HTTPStatus
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.about_about_get_response_about_about_get import AboutAboutGetResponseAboutAboutGet
+from ...models.http_validation_error import HTTPValidationError
+from ...models.status_request import StatusRequest
+from ...models.wb_token_ad import WbTokenAd
 from ...types import Response
 
 
 def _get_kwargs(
     *,
     client: Client,
+    json_body: WbTokenAd,
+    x_user_id: str,
 ) -> Dict[str, Any]:
-    url = "{}/about".format(client.base_url)
+    url = "{}/v1/auth_data/token".format(client.base_url)
 
     headers: Dict[str, str] = client.get_headers()
     cookies: Dict[str, Any] = client.get_cookies()
 
+    headers["x-user-id"] = x_user_id
+
+    json_json_body = json_body.to_dict()
+
     return {
-        "method": "get",
+        "method": "post",
         "url": url,
         "headers": headers,
         "cookies": cookies,
         "timeout": client.get_timeout(),
         "follow_redirects": client.follow_redirects,
+        "json": json_json_body,
     }
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Optional[AboutAboutGetResponseAboutAboutGet]:
-    if response.status_code == HTTPStatus.OK:
-        response_200 = AboutAboutGetResponseAboutAboutGet.from_dict(response.json())
+def _parse_response(*, client: Client, response: httpx.Response) -> Optional[Union[HTTPValidationError, StatusRequest]]:
+    if response.status_code == HTTPStatus.CREATED:
+        response_201 = StatusRequest.from_dict(response.json())
 
-        return response_200
+        return response_201
+    if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
+        response_422 = HTTPValidationError.from_dict(response.json())
+
+        return response_422
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[AboutAboutGetResponseAboutAboutGet]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[HTTPValidationError, StatusRequest]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -51,19 +64,27 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Abo
 def sync_detailed(
     *,
     client: Client,
-) -> Response[AboutAboutGetResponseAboutAboutGet]:
-    """About
+    json_body: WbTokenAd,
+    x_user_id: str,
+) -> Response[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет токен
+
+    Args:
+        x_user_id (str):
+        json_body (WbTokenAd):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[AboutAboutGetResponseAboutAboutGet]
+        Response[Union[HTTPValidationError, StatusRequest]]
     """
 
     kwargs = _get_kwargs(
         client=client,
+        json_body=json_body,
+        x_user_id=x_user_id,
     )
 
     response = httpx.request(
@@ -77,38 +98,54 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-) -> Optional[AboutAboutGetResponseAboutAboutGet]:
-    """About
+    json_body: WbTokenAd,
+    x_user_id: str,
+) -> Optional[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет токен
+
+    Args:
+        x_user_id (str):
+        json_body (WbTokenAd):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        AboutAboutGetResponseAboutAboutGet
+        Union[HTTPValidationError, StatusRequest]
     """
 
     return sync_detailed(
         client=client,
+        json_body=json_body,
+        x_user_id=x_user_id,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: Client,
-) -> Response[AboutAboutGetResponseAboutAboutGet]:
-    """About
+    json_body: WbTokenAd,
+    x_user_id: str,
+) -> Response[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет токен
+
+    Args:
+        x_user_id (str):
+        json_body (WbTokenAd):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[AboutAboutGetResponseAboutAboutGet]
+        Response[Union[HTTPValidationError, StatusRequest]]
     """
 
     kwargs = _get_kwargs(
         client=client,
+        json_body=json_body,
+        x_user_id=x_user_id,
     )
 
     async with httpx.AsyncClient(verify=client.verify_ssl) as _client:
@@ -120,19 +157,27 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-) -> Optional[AboutAboutGetResponseAboutAboutGet]:
-    """About
+    json_body: WbTokenAd,
+    x_user_id: str,
+) -> Optional[Union[HTTPValidationError, StatusRequest]]:
+    """Метод сохраняет токен
+
+    Args:
+        x_user_id (str):
+        json_body (WbTokenAd):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        AboutAboutGetResponseAboutAboutGet
+        Union[HTTPValidationError, StatusRequest]
     """
 
     return (
         await asyncio_detailed(
             client=client,
+            json_body=json_body,
+            x_user_id=x_user_id,
         )
     ).parsed

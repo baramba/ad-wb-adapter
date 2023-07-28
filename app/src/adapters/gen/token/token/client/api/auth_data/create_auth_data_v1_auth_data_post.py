@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 import httpx
 
 from ... import errors
-from ...client import AuthenticatedClient, Client
+from ...client import Client
 from ...models.create_auth_data import CreateAuthData
 from ...models.http_validation_error import HTTPValidationError
 from ...models.status_request import StatusRequest
@@ -13,13 +13,16 @@ from ...types import Response
 
 def _get_kwargs(
     *,
-    client: AuthenticatedClient,
+    client: Client,
     json_body: CreateAuthData,
+    x_user_id: str,
 ) -> Dict[str, Any]:
     url = "{}/v1/auth_data".format(client.base_url)
 
     headers: Dict[str, str] = client.get_headers()
     cookies: Dict[str, Any] = client.get_cookies()
+
+    headers["x-user-id"] = x_user_id
 
     json_json_body = json_body.to_dict()
 
@@ -60,12 +63,14 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: Client,
     json_body: CreateAuthData,
+    x_user_id: str,
 ) -> Response[Union[HTTPValidationError, StatusRequest]]:
     """Метод сохраняет пользовательские данные
 
     Args:
+        x_user_id (str):
         json_body (CreateAuthData):
 
     Raises:
@@ -79,6 +84,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         client=client,
         json_body=json_body,
+        x_user_id=x_user_id,
     )
 
     response = httpx.request(
@@ -91,12 +97,14 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: Client,
     json_body: CreateAuthData,
+    x_user_id: str,
 ) -> Optional[Union[HTTPValidationError, StatusRequest]]:
     """Метод сохраняет пользовательские данные
 
     Args:
+        x_user_id (str):
         json_body (CreateAuthData):
 
     Raises:
@@ -110,17 +118,20 @@ def sync(
     return sync_detailed(
         client=client,
         json_body=json_body,
+        x_user_id=x_user_id,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: Client,
     json_body: CreateAuthData,
+    x_user_id: str,
 ) -> Response[Union[HTTPValidationError, StatusRequest]]:
     """Метод сохраняет пользовательские данные
 
     Args:
+        x_user_id (str):
         json_body (CreateAuthData):
 
     Raises:
@@ -134,6 +145,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         client=client,
         json_body=json_body,
+        x_user_id=x_user_id,
     )
 
     async with httpx.AsyncClient(verify=client.verify_ssl) as _client:
@@ -144,12 +156,14 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: Client,
     json_body: CreateAuthData,
+    x_user_id: str,
 ) -> Optional[Union[HTTPValidationError, StatusRequest]]:
     """Метод сохраняет пользовательские данные
 
     Args:
+        x_user_id (str):
         json_body (CreateAuthData):
 
     Raises:
@@ -164,5 +178,6 @@ async def asyncio(
         await asyncio_detailed(
             client=client,
             json_body=json_body,
+            x_user_id=x_user_id,
         )
     ).parsed

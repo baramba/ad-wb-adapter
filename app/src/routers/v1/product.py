@@ -1,9 +1,12 @@
 import uuid
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Response, status
+from fastapi.responses import ORJSONResponse
 
 from core.settings import logger
 from exceptions.base import WBAError
-from fastapi import APIRouter, Depends, Query, Response, status
-from fastapi.responses import ORJSONResponse
+from routers.utils import x_user_id
 from schemas.v1.base import BaseResponse, BaseResponseError
 from schemas.v1.product import Categories, CategoryResponse, ProductsSubject, ProductSubjectResponse
 from services.product import ProductService, get_product_service
@@ -20,7 +23,7 @@ router = APIRouter(prefix="/product", tags=["product"])
     description="Метод позволяет получить список продуктовых карточек пользователя WB.",
 )
 async def products(
-    user_id: uuid.UUID,
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     subject_id: int,
     product_service: ProductService = Depends(get_product_service),
 ) -> Response:
@@ -48,7 +51,7 @@ async def products(
     description="Метод позволяет получить список категорий пользователя WB.",
 )
 async def categories(
-    user_id: uuid.UUID = Query(),
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     product_service: ProductService = Depends(get_product_service),
 ) -> Response:
     try:

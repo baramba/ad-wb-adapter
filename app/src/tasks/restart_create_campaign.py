@@ -5,6 +5,7 @@ from redis.asyncio import Redis
 
 from adapters.token import TokenManager
 from adapters.wb.unofficial.campaign import CampaignAdapterUnofficial
+from core.settings import settings
 from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.db.redis import get_redis
@@ -18,7 +19,7 @@ from services.queue import BaseQueue
 from utils import depends_decorator
 
 
-class CampaignCreateFullTask:
+class СontinueCreateCampaignTask:
     @classmethod
     @depends_decorator(
         redis=get_redis,
@@ -26,13 +27,14 @@ class CampaignCreateFullTask:
         campaign_adapter=get_campaign_adapter_unofficial,
         token_manager=get_token_manager,
     )
-    async def restart_create_full_campaign(
+    async def continue_create_campaign(
         cls,
         ctx: dict,
         job_id: uuid.UUID,
         campaign: CampaignCreateDTO,
         routing_key: str,
         user_id: uuid.UUID,
+        wb_campaign_id: int,
         redis: Redis,
         queue_service: BaseQueue,
         campaign_adapter: CampaignAdapterUnofficial,
@@ -42,14 +44,9 @@ class CampaignCreateFullTask:
         job_result: str = ""
 
         user_auth_data: UnofficialUserAuthDataDTO = await token_manager.auth_data_by_user_id_unofficial(user_id)
-
         campaign_adapter.auth_data = user_auth_data
 
         try:
-            wb_campaign_id = await campaign_adapter.create_campaign(
-                name=campaign.name,
-                nms=campaign.nms,
-            )
             replenish = ReplenishBugetRequestDTO(
                 wb_campaign_id=wb_campaign_id,
                 amount=campaign.budget,
@@ -88,12 +85,6 @@ class CampaignCreateFullTask:
             )
 
     @classmethod
-    @depends_decorator(
-        redis=get_redis,
-        queue_service=get_queue_service,
-        campaign_adapter=get_campaign_adapter_unofficial,
-        token_manager=get_token_manager,
-    )
     async def save_and_notify_job_result(
         cls,
         job_result: str,
@@ -106,6 +97,6 @@ class CampaignCreateFullTask:
         await redis.set(
             name=name,
             value=job_result,
-            ex=1800,
+            ex=settings.REDIS.JOB_RESULT_EX_TIME,
         )
         await queue_service.publish(routing_key=routing_key, message=message, priority=1)

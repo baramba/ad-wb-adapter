@@ -7,23 +7,20 @@ from ... import errors
 from ...client import Client
 from ...models.auth_data_get_response import AuthDataGetResponse
 from ...models.http_validation_error import HTTPValidationError
-from ...types import UNSET, Response
+from ...types import Response
 
 
 def _get_kwargs(
     *,
     client: Client,
-    user_id: str,
+    x_user_id: str,
 ) -> Dict[str, Any]:
     url = "{}/v1/auth_data".format(client.base_url)
 
     headers: Dict[str, str] = client.get_headers()
     cookies: Dict[str, Any] = client.get_cookies()
 
-    params: Dict[str, Any] = {}
-    params["user_id"] = user_id
-
-    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
+    headers["x-user-id"] = x_user_id
 
     return {
         "method": "get",
@@ -32,7 +29,6 @@ def _get_kwargs(
         "cookies": cookies,
         "timeout": client.get_timeout(),
         "follow_redirects": client.follow_redirects,
-        "params": params,
     }
 
 
@@ -67,14 +63,14 @@ def _build_response(
 def sync_detailed(
     *,
     client: Client,
-    user_id: str,
+    x_user_id: str,
 ) -> Response[Union[AuthDataGetResponse, HTTPValidationError]]:
     """Метод для получения пользовательских данных
 
      Метод позволяет получить пользовательские данные, в том числе wb_token.
 
     Args:
-        user_id (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -86,7 +82,7 @@ def sync_detailed(
 
     kwargs = _get_kwargs(
         client=client,
-        user_id=user_id,
+        x_user_id=x_user_id,
     )
 
     response = httpx.request(
@@ -100,14 +96,14 @@ def sync_detailed(
 def sync(
     *,
     client: Client,
-    user_id: str,
+    x_user_id: str,
 ) -> Optional[Union[AuthDataGetResponse, HTTPValidationError]]:
     """Метод для получения пользовательских данных
 
      Метод позволяет получить пользовательские данные, в том числе wb_token.
 
     Args:
-        user_id (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -119,21 +115,21 @@ def sync(
 
     return sync_detailed(
         client=client,
-        user_id=user_id,
+        x_user_id=x_user_id,
     ).parsed
 
 
 async def asyncio_detailed(
     *,
     client: Client,
-    user_id: str,
+    x_user_id: str,
 ) -> Response[Union[AuthDataGetResponse, HTTPValidationError]]:
     """Метод для получения пользовательских данных
 
      Метод позволяет получить пользовательские данные, в том числе wb_token.
 
     Args:
-        user_id (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -145,7 +141,7 @@ async def asyncio_detailed(
 
     kwargs = _get_kwargs(
         client=client,
-        user_id=user_id,
+        x_user_id=x_user_id,
     )
 
     async with httpx.AsyncClient(verify=client.verify_ssl) as _client:
@@ -157,14 +153,14 @@ async def asyncio_detailed(
 async def asyncio(
     *,
     client: Client,
-    user_id: str,
+    x_user_id: str,
 ) -> Optional[Union[AuthDataGetResponse, HTTPValidationError]]:
     """Метод для получения пользовательских данных
 
      Метод позволяет получить пользовательские данные, в том числе wb_token.
 
     Args:
-        user_id (str):
+        x_user_id (str):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -177,6 +173,6 @@ async def asyncio(
     return (
         await asyncio_detailed(
             client=client,
-            user_id=user_id,
+            x_user_id=x_user_id,
         )
     ).parsed

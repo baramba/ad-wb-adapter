@@ -13,10 +13,7 @@ class LogExtraParamsMiddleware:
             request = Request(scope)
             campaign_id.set(request.query_params.get("campaign_id"))
             subject_id.set(request.query_params.get("subject_id"))
-
-            if user_id_ := request.headers.get("user-id"):
-                user_id.set(user_id_)
-            elif user_id_ := request.query_params.get("user_id"):
-                user_id.set(user_id_)
+            user_id.set(request.headers.get("x-user-id"))
             wb_campaign_id.set(request.query_params.get("wb_campaign_id"))
+
         await self.app(scope, receive, send)

@@ -1,11 +1,12 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.responses import ORJSONResponse
 
 from core.settings import logger
 from exceptions.base import WBAError
+from routers.utils import x_user_id
 from schemas.v1.base import BaseResponse, BaseResponseError
 from schemas.v1.supplier import Balance, BalanceResponse, WBToken, WBTokenRequest, WBTokenResponse
 from services.stake import StakeService, get_stake_service
@@ -50,7 +51,7 @@ async def auth_wb_user(
     },
 )
 async def balance(
-    user_id: Annotated[uuid.UUID, Header()],
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     stake_service: StakeService = Depends(get_stake_service),
 ) -> Response:
     try:

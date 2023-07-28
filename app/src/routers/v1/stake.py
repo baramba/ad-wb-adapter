@@ -8,6 +8,7 @@ from fastapi.routing import APIRouter
 from core.settings import logger
 from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType
 from exceptions.base import WBAError
+from routers.utils import x_user_id
 from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
 from schemas.v1.stake import (
     ActualStakes,
@@ -128,7 +129,7 @@ async def organic_by_region(
 async def set_new_rate(
     wb_campaign_id: int,
     rate: int,
-    user_id: uuid.UUID,
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     stake_service: StakeService = Depends(get_stake_service),
     ad_type: CampaignType = CampaignType.SEARCH,
     param: int | None = None,
@@ -167,7 +168,7 @@ async def set_new_rate(
 )
 async def pause_campaign(
     wb_campaign_id: int,
-    user_id: uuid.UUID,
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     stake_service: StakeService = Depends(get_stake_service),
 ) -> Response:
     try:
@@ -196,7 +197,7 @@ async def pause_campaign(
 )
 async def resume_campaign(
     wb_campaign_id: int,
-    user_id: uuid.UUID,
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     stake_service: StakeService = Depends(get_stake_service),
 ) -> Response:
     try:
@@ -217,7 +218,7 @@ async def resume_campaign(
     )
 
 
-@router.put(
+@router.get(
     path="/campaigns",
     responses={
         status.HTTP_200_OK: {"model": CampaignsResponse},
@@ -226,7 +227,7 @@ async def resume_campaign(
     description="Метод позволяет позволяет получить список рекламных кампаний.",
 )
 async def campaigns(
-    user_id: Annotated[uuid.UUID, Header()],
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     stake_service: StakeService = Depends(get_stake_service),
     type: CampaignType | None = Query(None, description="Тип рекламной кампании."),
     status: CampaignStatus | None = Query(None, description="Статус рекламной кампании."),
@@ -258,7 +259,7 @@ async def campaigns(
     description="Метод позволяет установить список временных интервалов для рекламной кампании.",
 )
 async def intervals(
-    user_id: uuid.UUID,
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     wb_campaign_id: int,
     body: IntervalsRequest,
     stake_service: StakeService = Depends(get_stake_service),
@@ -295,7 +296,7 @@ async def intervals(
     <a href="https://openapi.wildberries.ru/#tag/Reklama/paths/~1adv~1v0~1advert/get">Ссылка на описание.</a>""",
 )
 async def campaign(
-    user_id: uuid.UUID,
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     campaign_id: int,
     stake_service: StakeService = Depends(get_stake_service),
 ) -> Response:

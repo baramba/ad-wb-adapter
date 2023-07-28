@@ -10,10 +10,6 @@ class UserAuthDataBase(BaseOrjsonModel):
     wb_token_ad: str | None = None
 
 
-class UserAuthDataDTO(UserAuthDataBase):
-    ...
-
-
 class OfficialUserAuthDataDTO(UserAuthDataBase):
     wb_token_ad: str
 
