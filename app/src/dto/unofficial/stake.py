@@ -11,9 +11,15 @@ class ActualStakesAdvertsDTO(BaseOrjsonModel):
     subject: int
 
 
+class SortWaights(BaseOrjsonModel):
+    cpm: int
+    delivery: int
+
+
 class ActualStakesDTO(BaseOrjsonModel):
     prioritySubjects: list[int] | None
     adverts: list[ActualStakesAdvertsDTO] | None
+    sortWeights: SortWaights | None
 
 
 class ProductDTO(BaseOrjsonModel):
@@ -27,8 +33,14 @@ class ProductsDTO(BaseOrjsonModel):
 
 
 class OrganicDTO(BaseOrjsonModel):
+    id: int
+    subjectId: int
     time1: int | None = None
     time2: int | None = None
+
+
+class OrganicsDTO(BaseOrjsonModel):
+    products: list[OrganicDTO] | None
 
 
 class BalanceDTO(BaseOrjsonModel):

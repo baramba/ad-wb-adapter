@@ -19,9 +19,15 @@ class ActualStakesAdverts(BaseOrjsonModel):
         allow_population_by_field_name = True
 
 
+class SortWaights(BaseOrjsonModel):
+    cpm: int
+    delivery: int
+
+
 class ActualStakes(BaseOrjsonModel):
     prioritySubjects: list[int] | None
     adverts: list[ActualStakesAdverts] | None
+    sortWeights: SortWaights | None
 
 
 class StakeResponse(BaseResponseSuccess):
@@ -43,12 +49,18 @@ class ProductResponse(BaseResponseSuccess):
 
 
 class Organic(BaseOrjsonModel):
+    id: int
+    subjectId: int
     time1: int | None = None
     time2: int | None = None
 
 
+class Organics(BaseOrjsonModel):
+    products: list[Organic]
+
+
 class OrganicResponse(BaseResponseSuccess):
-    payload: Organic
+    payload: Organics
 
 
 class OperationStatus(IntEnum):

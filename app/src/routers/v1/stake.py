@@ -1,9 +1,10 @@
 import uuid
 from typing import Annotated
 
-from fastapi import Depends, Header, Query, status
+from fastapi import Depends, Query, status
 from fastapi.responses import ORJSONResponse, Response
 from fastapi.routing import APIRouter
+from pydantic import parse_obj_as
 
 from core.settings import logger
 from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType
@@ -19,6 +20,7 @@ from schemas.v1.stake import (
     IntervalsRequest,
     Organic,
     OrganicResponse,
+    Organics,
     ProductResponse,
     Products,
     StakeResponse,
@@ -34,7 +36,11 @@ router = APIRouter(prefix="/stake", tags=["stake"])
         status.HTTP_200_OK: {"model": StakeResponse},
     },
     summary="Метод для получения списка актуальных ставок.",
-    description="Метод позволяет получить актуальные ставки по ключевой фразе.",
+    description="""
+Метод позволяет получить актуальные ставки по ключевой фразе.
+[https://catalog-ads.wildberries.ru/api/v6/search?keyword=]\
+(https://catalog-ads.wildberries.ru/api/v6/search?keyword=)
+""",
 )
 async def actual_stakes(
     keyword: str,
@@ -91,7 +97,11 @@ async def products_by_region(
         status.HTTP_200_OK: {"model": OrganicResponse},
     },
     summary="Метод для получение органической выдачи по региону.",
-    description="Метод позволяет получить информацию о продуктах в регионе.",
+    description="""
+Метод позволяет получить информацию о продуктах в регионе.
+[https://search.wb.ru/exactmatch/ru/male/v4/search?dest=&query=&resultset=catalog]\
+(https://search.wb.ru/exactmatch/ru/male/v4/search?dest=&query=&resultset=catalog)
+""",
 )
 async def organic_by_region(
     dest: str,
@@ -100,22 +110,24 @@ async def organic_by_region(
     stake_service: StakeService = Depends(get_stake_service),
 ) -> Response:
     try:
-        organic_ = await stake_service.organic_by_region(
+        organic = await stake_service.organic_by_region(
             dest=dest,
             query=query,
             resultset=resultset,
         )
-        organic = Organic.parse_obj(organic_)
+
+        if not organic.products:
+            return ORJSONResponse(content=BaseResponseEmpty().dict())
+
+        products = parse_obj_as(list[Organic], organic.products)
+        organics = Organics(products=products)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
         logger.error(e)
-        return ORJSONResponse(content=BaseResponseError())
+        return ORJSONResponse(content=BaseResponseError().dict())
 
-    if organic.time1 is None:
-        return ORJSONResponse(content=BaseResponseEmpty().dict())
-
-    return ORJSONResponse(content=OrganicResponse(payload=organic).dict())
+    return ORJSONResponse(content=OrganicResponse(payload=organics).dict())
 
 
 @router.put(

@@ -1,20 +1,22 @@
 from urllib.parse import quote
 
-from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
-from adapters.wb.utils import error_for_raise
-from core.settings import logger
-from dto.unofficial.stake import ActualStakesDTO, OrganicDTO, ProductsDTO
-from exceptions.base import WBAError
 from fastapi import status
 from httpx import HTTPStatusError
 from pydantic import ValidationError
+
+from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
+from adapters.wb.utils import error_for_raise
+from core.settings import logger
+from dto.unofficial.stake import ActualStakesDTO, OrganicsDTO, ProductsDTO
+from exceptions.base import WBAError
+from schemas.v1.base import ResponseCode
 
 
 class StakeAdapterUnofficial(WBAdapterUnofficial):
     async def actual_stakes(self, keyword: str) -> ActualStakesDTO:
         """Метод возвращает список актуальных ставок по ключевой фразе."""
 
-        url = "https://catalog-ads.wildberries.ru/api/v5/search"
+        url = "https://catalog-ads.wildberries.ru/api/v6/search"
         referer = f"https://www.wildberries.ru/catalog/0/search.aspx?search={quote(keyword)}"
 
         headers = {"Referer": referer}
@@ -66,7 +68,7 @@ class StakeAdapterUnofficial(WBAdapterUnofficial):
             logger.exception("Не удалось обработать результат запроса, полученный от WB.")
             return ProductsDTO()
 
-    async def organic_by_region(self, dest: str, query: str, resultset: str) -> OrganicDTO:
+    async def organic_by_region(self, dest: str, query: str, resultset: str) -> OrganicsDTO:
         """Метод возвращает список продуктов по региону."""
 
         url = "https://search.wb.ru/exactmatch/ru/male/v4/search"
@@ -85,12 +87,17 @@ class StakeAdapterUnofficial(WBAdapterUnofficial):
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
-                description="Ошибка при получении списка поисковой выдачи.",
+                description="Не удалось получить данные органической выдачи.",
                 error_class=WBAError,
             ) from e
         try:
-            product = result.json()["data"]["products"][0]
-            return OrganicDTO.parse_obj(product)
-        except (IndexError, KeyError):
-            logger.exception("Не удалось обработать результат запроса, полученный от WB.")
-            return OrganicDTO()
+            products = result.json()["data"]["products"]
+            return OrganicsDTO(products=products)
+        except ValidationError as e:
+            logger.error(f"Failed to process received data from Wildberries. error: {e}")
+            raise WBAError(
+                status_code=ResponseCode.ERROR,
+                description=f"Не удалось обработать данные, полученные от WB. {e}",
+            ) from e
+        except KeyError:
+            return OrganicsDTO(products=None)

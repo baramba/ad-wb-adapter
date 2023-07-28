@@ -14,7 +14,7 @@ from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
 from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
 from dto.token import OfficialUserAuthDataDTO
-from dto.unofficial.stake import ActualStakesDTO, BalanceDTO, OrganicDTO, ProductsDTO
+from dto.unofficial.stake import ActualStakesDTO, BalanceDTO, OrganicsDTO, ProductsDTO
 
 
 class StakeService:
@@ -48,7 +48,7 @@ class StakeService:
         dest: str,
         query: str,
         resultset: str,
-    ) -> OrganicDTO:
+    ) -> OrganicsDTO:
         return await self.stake_adapter_unofficial.organic_by_region(dest=dest, query=query, resultset=resultset)
 
     async def set_new_rate(
