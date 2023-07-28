@@ -1,8 +1,6 @@
-name: Code quality checks and image push
+name: Code quality checks and push latest image to registry
 on:
   push:
-    branches: ["main"]
-  pull_request:
     branches: ["main"]
   workflow_dispatch:
 jobs:
@@ -37,7 +35,7 @@ jobs:
           MYPYPATH: ${{ env.MYPYPATH }}
         run: |
           poetry run mypy --config-file ../mypy.ini $(git ls-files '*.py')
-  create-docker-image:
+  push-docker-image:
     runs-on: ubuntu-latest
     env:
       WORKDIR: app
