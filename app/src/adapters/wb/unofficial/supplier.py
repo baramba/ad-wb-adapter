@@ -31,7 +31,6 @@ class SupplierAdapter(WBAdapterUnofficial):
                 "x-supplier-id-external": self.wb_x_supplier_id_external,
             }
             result: Response = await self._post(url=url, cookies=cookies, headers=headers)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
@@ -53,7 +52,6 @@ class SupplierAdapter(WBAdapterUnofficial):
                 "device": self.random_device(),
             }
             result: Response = await self._post(url=url, cookies=cookies, body=body, headers=headers)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
@@ -78,8 +76,7 @@ class SupplierAdapter(WBAdapterUnofficial):
                 "x-supplier-id-external": self.wb_x_supplier_id_external,
                 "WBToken": wb_token_access,
             }
-            result: Response = await self._get(url=url, cookies=cookies, headers=headers)
-            result.raise_for_status()
+            await self._get(url=url, cookies=cookies, headers=headers)
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,

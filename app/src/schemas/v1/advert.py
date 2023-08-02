@@ -134,3 +134,13 @@ class CampaignResponse(BaseResponseSuccess):
 class IntervalsRequest(BaseOrjsonModel):
     intervals: list[IntervalDTO]
     param: int | None = None
+
+
+class Config(BaseOrjsonModel):
+    budget_min: int
+    cpm_min: int
+    cpm_min_start: int
+
+
+class ConfigResponse(BaseResponseSuccess):
+    payload: Config | None

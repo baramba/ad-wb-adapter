@@ -1,3 +1,4 @@
+import random
 from urllib.parse import quote
 
 from fastapi import status
@@ -7,7 +8,7 @@ from pydantic import ValidationError
 from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
 from adapters.wb.utils import error_for_raise
 from core.settings import logger
-from dto.unofficial.advert import ActualStakesDTO, OrganicsDTO, ProductsDTO
+from dto.unofficial.advert import ActualStakesDTO, ConfigDTO, OrganicsDTO, ProductsDTO
 from exceptions.base import WBAError
 from schemas.v1.base import ResponseCode
 
@@ -23,7 +24,6 @@ class AdvertAdapterUnofficial(WBAdapterUnofficial):
         params = {"keyword": keyword}
         try:
             result = await self._get(url=url, headers=headers, params=params)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -53,7 +53,6 @@ class AdvertAdapterUnofficial(WBAdapterUnofficial):
         }
         try:
             result = await self._get(url=url, headers=headers, params=params)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -83,7 +82,6 @@ class AdvertAdapterUnofficial(WBAdapterUnofficial):
         }
         try:
             result = await self._get(url=url, headers=headers, params=params)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -101,3 +99,27 @@ class AdvertAdapterUnofficial(WBAdapterUnofficial):
             ) from e
         except KeyError:
             return OrganicsDTO(products=None)
+
+    async def config_values(self) -> ConfigDTO:
+        """Метод возвращает конфигурационные параметры."""
+
+        url = "https://cmp.wildberries.ru/backend/api/v5/configvalues"
+        referer = f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{random.randint(8462916, 9462916)}"
+        headers = {"Referer": referer}
+        error_desc = "Не удалось получить конфигурационные параметры."
+        try:
+            result = await self._get(url=url, headers=headers)
+        except HTTPStatusError as e:
+            raise error_for_raise(
+                status_code=e.response.status_code,
+                description=error_desc,
+                error_class=WBAError,
+            ) from e
+        try:
+            return ConfigDTO.parse_obj(result.json())
+        except ValidationError as e:
+            logger.error(f"{error_desc} Ошибка: {e}")
+            raise WBAError(
+                status_code=ResponseCode.ERROR,
+                description=f"{error_desc} Ошибка {e}",
+            ) from e

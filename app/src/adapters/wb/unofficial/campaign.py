@@ -174,12 +174,11 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         body = {"sum": new_budget_amount, "type": replenish.type}
 
         try:
-            result = await self._post(
+            await self._post(
                 url=url,
                 body=body,
                 headers=headers,
             )
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -197,12 +196,11 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         body = {"sum": replenish.amount, "type": replenish.type}
 
         try:
-            result = await self._post(
+            await self._post(
                 url=url,
                 body=body,
                 headers=headers,
             )
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -217,15 +215,13 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
 
         try:
             result = await self._get(url=url, headers=headers)
-            result.raise_for_status()
+            return CampaignConfigDTO.parse_obj(result.json())
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
                 description=f"Ошибка при получении конфигурации кампании. wb_campaign_id={id}",
                 error_class=WBAError,
             ) from e
-
-        return CampaignConfigDTO.parse_obj(result.json())
 
     async def start_campaign(self, id: int) -> None:
         """Запускает рекламную кампанию.
@@ -247,12 +243,11 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         # Задержка, чтобы избежать - too many requests (429)
         await asyncio.sleep(0.5)
         try:
-            result = await self._put(
+            await self._put(
                 url=url,
                 body=config.dict(),
                 headers=headers,
             )
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -272,12 +267,11 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         headers = {"Referer": f"https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}"}
 
         try:
-            result = await self._put(
+            await self._put(
                 url=url,
                 body=config.dict(),
                 headers=headers,
             )
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -297,12 +291,11 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         headers = {"Referer": f"https://cmp.wildberries.ru/campaigns/list/all/edit/search/{id}"}
 
         try:
-            result = await self._put(
+            await self._put(
                 url=url,
                 body=config.dict(),
                 headers=headers,
             )
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -324,11 +317,10 @@ class CampaignAdapterUnofficial(WBAdapterUnofficial):
         headers = {"Referer": f"https://cmp.wildberries.ru/campaigns/list/active/edit/search/{id}"}
 
         try:
-            result = await self._get(
+            await self._get(
                 url=url,
                 headers=headers,
             )
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,

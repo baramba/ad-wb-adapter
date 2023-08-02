@@ -12,6 +12,8 @@ from exceptions.base import WBAError
 from routers.utils import x_user_id
 from schemas.v1.advert import (
     ActualStakes,
+    Config,
+    ConfigResponse,
     IntervalsRequest,
     Organic,
     OrganicResponse,
@@ -21,7 +23,7 @@ from schemas.v1.advert import (
     StakeResponse,
 )
 from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
-from services.advert import AdvertService, get_stake_service
+from services.advert import AdvertService, get_advert_service
 
 router = APIRouter(prefix="/stake", tags=["stake"])
 
@@ -40,10 +42,10 @@ router = APIRouter(prefix="/stake", tags=["stake"])
 )
 async def actual_stakes(
     keyword: str,
-    stake_service: AdvertService = Depends(get_stake_service),
+    advert_service: AdvertService = Depends(get_advert_service),
 ) -> Response:
     try:
-        actual_stakes = await stake_service.actual_stakes(keyword=keyword)
+        actual_stakes = await advert_service.actual_stakes(keyword=keyword)
         stakes = ActualStakes.parse_obj(actual_stakes)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
@@ -62,16 +64,16 @@ async def actual_stakes(
     responses={
         status.HTTP_200_OK: {"model": ProductResponse},
     },
-    summary="Метод для получение информации о продуктах в регионе.",
+    summary="Метод для получения информации о продуктах в регионе.",
     description="Метод позволяет получить информацию о продуктах в регионе.",
 )
 async def products_by_region(
     dest: str,
     nm: str,
-    stake_service: AdvertService = Depends(get_stake_service),
+    advert_service: AdvertService = Depends(get_advert_service),
 ) -> Response:
     try:
-        products_ = await stake_service.products_by_region(dest=dest, nm=nm)
+        products_ = await advert_service.products_by_region(dest=dest, nm=nm)
         products = Products.parse_obj(products_)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
@@ -103,10 +105,10 @@ async def organic_by_region(
     dest: str,
     query: str,
     resultset: str,
-    stake_service: AdvertService = Depends(get_stake_service),
+    advert_service: AdvertService = Depends(get_advert_service),
 ) -> Response:
     try:
-        organic = await stake_service.organic_by_region(
+        organic = await advert_service.organic_by_region(
             dest=dest,
             query=query,
             resultset=resultset,
@@ -138,12 +140,12 @@ async def set_new_rate(
     wb_campaign_id: int,
     rate: int,
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    stake_service: AdvertService = Depends(get_stake_service),
+    advert_service: AdvertService = Depends(get_advert_service),
     ad_type: CampaignType = CampaignType.SEARCH,
     param: int | None = None,
 ) -> Response:
     try:
-        await stake_service.set_new_rate(
+        await advert_service.set_new_rate(
             rate=rate,
             wb_campaign_id=wb_campaign_id,
             ad_type=ad_type,
@@ -177,10 +179,10 @@ async def set_new_rate(
 async def pause_campaign(
     wb_campaign_id: int,
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    stake_service: AdvertService = Depends(get_stake_service),
+    advert_service: AdvertService = Depends(get_advert_service),
 ) -> Response:
     try:
-        await stake_service.pause_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
+        await advert_service.pause_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
@@ -206,10 +208,10 @@ async def pause_campaign(
 async def resume_campaign(
     wb_campaign_id: int,
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    stake_service: AdvertService = Depends(get_stake_service),
+    advert_service: AdvertService = Depends(get_advert_service),
 ) -> Response:
     try:
-        await stake_service.resume_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
+        await advert_service.resume_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
     except WBAError as e:
         return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
     except Exception as e:
@@ -238,10 +240,10 @@ async def intervals(
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     wb_campaign_id: int,
     body: IntervalsRequest,
-    stake_service: AdvertService = Depends(get_stake_service),
+    advert_service: AdvertService = Depends(get_advert_service),
 ) -> Response:
     try:
-        await stake_service.set_time_intervals(
+        await advert_service.set_time_intervals(
             user_id=user_id,
             wb_campaign_id=wb_campaign_id,
             intervals=body.intervals,
@@ -260,3 +262,30 @@ async def intervals(
                 )
             ).dict()
         )
+
+
+@router.get(
+    path="/config",
+    responses={
+        status.HTTP_200_OK: {"model": ConfigResponse},
+    },
+    summary="Метод для получение конфигурационных параметров.",
+    description="""
+Метод позволяет получить:
+- минимальное значение бюджета;
+[https://cmp.wildberries.ru/backend/api/v5/configvalues]\
+(https://cmp.wildberries.ru/backend/api/v5/configvalues)
+""",
+)
+async def config(
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
+    advert_service: AdvertService = Depends(get_advert_service),
+) -> Response:
+    try:
+        config = await advert_service.config_values()
+        return ORJSONResponse(content=ConfigResponse(payload=Config.parse_obj(config)).dict())
+    except WBAError as e:
+        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
+    except Exception as e:
+        logger.error(e)
+        return ORJSONResponse(content=BaseResponseError().dict())

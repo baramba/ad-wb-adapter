@@ -195,6 +195,7 @@ async def budget(
 """,
 )
 async def deposit(
+    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     wb_campaign_id: int,
     amount: int,
     type: ReplenishSourceType = Query(description="0 - Счет, 1 - Баланс"),

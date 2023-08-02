@@ -41,3 +41,13 @@ class OrganicDTO(BaseOrjsonModel):
 
 class OrganicsDTO(BaseOrjsonModel):
     products: list[OrganicDTO] | None
+
+
+class ConfigDTO(BaseOrjsonModel):
+    autonew: bool
+    budget_hold_sum: int
+    budget_min: int
+    cpm_min: int
+    cpm_min_start: int
+    cpm_step: int
+    searchcat: bool

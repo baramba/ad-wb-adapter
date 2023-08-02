@@ -20,7 +20,6 @@ class ProductAdapter(WBAdapterUnofficial):
         body = ProductRequestBodyDTO().dict()
         try:
             result = await self._post(url=url, headers=headers, body=body)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -43,7 +42,6 @@ class ProductAdapter(WBAdapterUnofficial):
 
         try:
             result = await self._get(url=url, headers=headers)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,
@@ -63,7 +61,6 @@ class ProductAdapter(WBAdapterUnofficial):
         params = {"subject": subject_id}
         try:
             result = await self._get(url=url, headers=headers, params=params)
-            result.raise_for_status()
         except HTTPStatusError as e:
             raise error_for_raise(
                 status_code=e.response.status_code,

@@ -7,12 +7,13 @@ from adapters.wb.official.advert import AdvertAdapter
 from adapters.wb.unofficial.advert import AdvertAdapterUnofficial
 from adapters.wb.unofficial.campaign import CampaignAdapterUnofficial
 from core.settings import logger
+from core.utils.context import AppContext
 from depends.adapters.official.advert import get_advert_adapter
 from depends.adapters.token import get_token_manager
 from depends.adapters.unofficial.advert import get_stake_adapter_unofficial
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
 from dto.official.advert import IntervalDTO
-from dto.unofficial.advert import ActualStakesDTO, OrganicsDTO, ProductsDTO
+from dto.unofficial.advert import ActualStakesDTO, ConfigDTO, OrganicsDTO, ProductsDTO
 
 
 class AdvertService:
@@ -114,16 +115,21 @@ class AdvertService:
 
         await self.stake_adapter.set_time_intervals(wb_campaign_id=wb_campaign_id, intervals=intervals, param=param)
 
+    async def config_values(self) -> ConfigDTO:
+        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(user_id=AppContext.user_id())
+        self.advert_adapter_unofficial.auth_data = auth_data
+        return await self.advert_adapter_unofficial.config_values()
 
-async def get_stake_service(
-    stake_adapter_unofficial: AdvertAdapterUnofficial = Depends(get_stake_adapter_unofficial),
+
+async def get_advert_service(
+    advert_adapter_unofficial: AdvertAdapterUnofficial = Depends(get_stake_adapter_unofficial),
     campaign_adapter_unofficial: CampaignAdapterUnofficial = Depends(get_campaign_adapter_unofficial),
-    stake_adapter: AdvertAdapter = Depends(get_advert_adapter),
+    advert_adapter: AdvertAdapter = Depends(get_advert_adapter),
     token_manager: TokenManager = Depends(get_token_manager),
 ) -> AdvertService:
     return AdvertService(
-        advert_adapter_unofficial=stake_adapter_unofficial,
-        advert_adapter=stake_adapter,
+        advert_adapter_unofficial=advert_adapter_unofficial,
+        advert_adapter=advert_adapter,
         campaign_adapter_unofficial=campaign_adapter_unofficial,
         token_manager=token_manager,
     )

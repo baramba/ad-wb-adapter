@@ -32,7 +32,6 @@ class AdvertAdapter(WBAdapter):
         error_desc = "Не удалось получить список актуальных ставок."
         try:
             result = await self._get(url=url, params=params)
-            result.raise_for_status()
             stakes = parse_obj_as(list[ActualStakeDTO], result.json())
             return ActualStakesDTO(stakes=stakes)
         except HTTPStatusError as e:
@@ -71,8 +70,7 @@ class AdvertAdapter(WBAdapter):
         }
         error_desc = "Не удалось установить новое значение ставки."
         try:
-            result = await self._post(url=url, body=body)
-            result.raise_for_status()
+            await self._post(url=url, body=body)
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
@@ -92,8 +90,7 @@ class AdvertAdapter(WBAdapter):
         params = {"id": id}
         error_desc = "Не удалось запустить рекламную кампанию."
         try:
-            result = await self._get(url=url, params=params)
-            result.raise_for_status()
+            await self._get(url=url, params=params)
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
@@ -113,8 +110,7 @@ class AdvertAdapter(WBAdapter):
         params = {"id": id}
         error_desc = "Не удалось поставить рекламную кампанию на паузу."
         try:
-            result = await self._get(url=url, params=params)
-            result.raise_for_status()
+            await self._get(url=url, params=params)
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
@@ -168,7 +164,6 @@ class AdvertAdapter(WBAdapter):
         error_desc = "Не удалось получить списк рекламных кампаний."
         try:
             result = await self._get(url=url, params=params)
-            result.raise_for_status()
             data = result.json()
             if not data:
                 return None
@@ -207,8 +202,7 @@ class AdvertAdapter(WBAdapter):
         }
         error_desc = "Не удалось изменить интервал показа рекламной кампании."
         try:
-            result = await self._post(url=url, body=body)
-            result.raise_for_status()
+            await self._post(url=url, body=body)
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
@@ -231,7 +225,6 @@ class AdvertAdapter(WBAdapter):
         error_desc = "Не удалось получить информацию о рекламной кампании."
         try:
             result = await self._get(url=url, params=params)
-            result.raise_for_status()
             if result.status_code == HTTPStatus.NO_CONTENT:
                 return None
             data = result.json()
@@ -259,7 +252,6 @@ class AdvertAdapter(WBAdapter):
         error_desc = "Не удалось получить информацию о балансе пользователя."
         try:
             result = await self._get(url=url)
-            result.raise_for_status()
             data = result.json()
             return BalanceDTO.parse_obj(data)
         except HTTPStatusError as e:
@@ -286,7 +278,6 @@ class AdvertAdapter(WBAdapter):
         error_desc = "Не удалось получить информацию о бюджете рекламной кампании."
         try:
             result = await self._get(url=url, params=params)
-            result.raise_for_status()
             data = result.json()
             return BudgetDTO.parse_obj(data)
         except HTTPStatusError as e:
