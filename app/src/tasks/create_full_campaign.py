@@ -26,7 +26,7 @@ class CampaignCreateFullTask:
     @depends_decorator(
         redis=get_redis,
         queue_service=get_queue_service,
-        campaign_adapter=get_campaign_adapter_unofficial,
+        campaign_adapter_unofficial=get_campaign_adapter_unofficial,
         token_manager=get_token_manager,
     )
     async def create_full_campaign(
@@ -38,18 +38,17 @@ class CampaignCreateFullTask:
         user_id: uuid.UUID,
         redis: Redis,
         queue_service: BaseQueue,
-        campaign_adapter: CampaignAdapterUnofficial,
+        campaign_adapter_unofficial: CampaignAdapterUnofficial,
         token_manager: TokenManager,
     ) -> None:
         rabbitmq_message = RabbitJobResult(job_id=job_id).json()
         job_result: str = ""
 
         user_auth_data: UnofficialUserAuthDataDTO = await token_manager.auth_data_by_user_id_unofficial(user_id)
-
-        campaign_adapter.auth_data = user_auth_data
+        campaign_adapter_unofficial.auth_data = user_auth_data
 
         try:
-            wb_campaign_id = await campaign_adapter.create_campaign(
+            wb_campaign_id = await campaign_adapter_unofficial.create_campaign(
                 name=campaign.name,
                 nms=campaign.nms,
             )
@@ -59,8 +58,8 @@ class CampaignCreateFullTask:
             )
             await asyncio.sleep(10)
             user_auth_data = await token_manager.auth_data_by_user_id_unofficial(user_id)
-            campaign_adapter.auth_data = user_auth_data
-            wb_campaign_id = await campaign_adapter.create_campaign(
+            campaign_adapter_unofficial.auth_data = user_auth_data
+            wb_campaign_id = await campaign_adapter_unofficial.create_campaign(
                 name=campaign.name,
                 nms=campaign.nms,
             )
@@ -71,10 +70,10 @@ class CampaignCreateFullTask:
                 amount=campaign.budget,
                 type=ReplenishSourceType.ACCOUNT,
             )
-            await campaign_adapter.replenish_budget(replenish)
-            await campaign_adapter.add_keywords_to_campaign(id=wb_campaign_id, keywords=campaign.keywords)
-            await campaign_adapter.switch_on_fixed_list(id=wb_campaign_id)
-            await campaign_adapter.start_campaign(id=wb_campaign_id)
+            await campaign_adapter_unofficial.replenish_budget(replenish)
+            await campaign_adapter_unofficial.add_keywords_to_campaign(id=wb_campaign_id, keywords=campaign.keywords)
+            await campaign_adapter_unofficial.switch_on_fixed_list(id=wb_campaign_id)
+            await campaign_adapter_unofficial.start_campaign(id=wb_campaign_id)
 
         except Exception as e:
             logger.exception(e)

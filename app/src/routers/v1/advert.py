@@ -1,22 +1,17 @@
 import uuid
 from typing import Annotated
 
-from fastapi import Depends, Query, status
+from fastapi import Depends, status
 from fastapi.responses import ORJSONResponse, Response
 from fastapi.routing import APIRouter
 from pydantic import parse_obj_as
 
 from core.settings import logger
-from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType
+from dto.official.advert import CampaignType
 from exceptions.base import WBAError
 from routers.utils import x_user_id
-from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
-from schemas.v1.stake import (
+from schemas.v1.advert import (
     ActualStakes,
-    CampaignInfo,
-    CampaignResponse,
-    Campaigns,
-    CampaignsResponse,
     IntervalsRequest,
     Organic,
     OrganicResponse,
@@ -25,7 +20,8 @@ from schemas.v1.stake import (
     Products,
     StakeResponse,
 )
-from services.stake import StakeService, get_stake_service
+from schemas.v1.base import BaseResponse, BaseResponseEmpty, BaseResponseError, BaseResponseSuccess
+from services.advert import AdvertService, get_stake_service
 
 router = APIRouter(prefix="/stake", tags=["stake"])
 
@@ -44,7 +40,7 @@ router = APIRouter(prefix="/stake", tags=["stake"])
 )
 async def actual_stakes(
     keyword: str,
-    stake_service: StakeService = Depends(get_stake_service),
+    stake_service: AdvertService = Depends(get_stake_service),
 ) -> Response:
     try:
         actual_stakes = await stake_service.actual_stakes(keyword=keyword)
@@ -72,7 +68,7 @@ async def actual_stakes(
 async def products_by_region(
     dest: str,
     nm: str,
-    stake_service: StakeService = Depends(get_stake_service),
+    stake_service: AdvertService = Depends(get_stake_service),
 ) -> Response:
     try:
         products_ = await stake_service.products_by_region(dest=dest, nm=nm)
@@ -107,7 +103,7 @@ async def organic_by_region(
     dest: str,
     query: str,
     resultset: str,
-    stake_service: StakeService = Depends(get_stake_service),
+    stake_service: AdvertService = Depends(get_stake_service),
 ) -> Response:
     try:
         organic = await stake_service.organic_by_region(
@@ -142,7 +138,7 @@ async def set_new_rate(
     wb_campaign_id: int,
     rate: int,
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    stake_service: StakeService = Depends(get_stake_service),
+    stake_service: AdvertService = Depends(get_stake_service),
     ad_type: CampaignType = CampaignType.SEARCH,
     param: int | None = None,
 ) -> Response:
@@ -181,7 +177,7 @@ async def set_new_rate(
 async def pause_campaign(
     wb_campaign_id: int,
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    stake_service: StakeService = Depends(get_stake_service),
+    stake_service: AdvertService = Depends(get_stake_service),
 ) -> Response:
     try:
         await stake_service.pause_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
@@ -210,7 +206,7 @@ async def pause_campaign(
 async def resume_campaign(
     wb_campaign_id: int,
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    stake_service: StakeService = Depends(get_stake_service),
+    stake_service: AdvertService = Depends(get_stake_service),
 ) -> Response:
     try:
         await stake_service.resume_campaign(wb_campaign_id=wb_campaign_id, user_id=user_id)
@@ -230,39 +226,7 @@ async def resume_campaign(
     )
 
 
-@router.get(
-    path="/campaigns",
-    responses={
-        status.HTTP_200_OK: {"model": CampaignsResponse},
-    },
-    summary="Метод для получения списка рекламных кампаний пользователя.",
-    description="Метод позволяет позволяет получить список рекламных кампаний.",
-)
-async def campaigns(
-    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    stake_service: StakeService = Depends(get_stake_service),
-    type: CampaignType | None = Query(None, description="Тип рекламной кампании."),
-    status: CampaignStatus | None = Query(None, description="Статус рекламной кампании."),
-    limit: int | None = Query(None, description="Количество кампаний в ответе."),
-) -> Response:
-    try:
-        campaigns: CampaignsDTO | None = await stake_service.campaigns(status=status, type=type, limit=limit)
-    except WBAError as e:
-        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
-    except Exception as e:
-        logger.error(e)
-        return ORJSONResponse(
-            content=BaseResponseError(
-                description=f"Ошибка при получении списка рекламных кампаний. user_id={user_id}"
-            ).dict()
-        )
-    if not campaigns:
-        return ORJSONResponse(content=BaseResponseEmpty().dict())
-
-    return ORJSONResponse(content=CampaignsResponse(payload=Campaigns.parse_obj(campaigns)).dict())
-
-
-@router.post(
+@router.put(
     path="/intervals",
     responses={
         status.HTTP_200_OK: {"model": BaseResponseSuccess},
@@ -274,7 +238,7 @@ async def intervals(
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
     wb_campaign_id: int,
     body: IntervalsRequest,
-    stake_service: StakeService = Depends(get_stake_service),
+    stake_service: AdvertService = Depends(get_stake_service),
 ) -> Response:
     try:
         await stake_service.set_time_intervals(
@@ -296,34 +260,3 @@ async def intervals(
                 )
             ).dict()
         )
-
-
-@router.get(
-    path="/campaign",
-    responses={
-        status.HTTP_200_OK: {"model": CampaignResponse},
-    },
-    summary="Метод для получения информации о рекламной кампании.",
-    description="""Метод позволяет позволяет получить информацию о рекламной кампании по id.
-    <a href="https://openapi.wildberries.ru/#tag/Reklama/paths/~1adv~1v0~1advert/get">Ссылка на описание.</a>""",
-)
-async def campaign(
-    user_id: Annotated[uuid.UUID, Depends(x_user_id)],
-    campaign_id: int,
-    stake_service: StakeService = Depends(get_stake_service),
-) -> Response:
-    try:
-        campaign: CampaignInfoDTO | None = await stake_service.campaign(user_id=user_id, campaign_id=campaign_id)
-    except WBAError as e:
-        return ORJSONResponse(content=BaseResponse.parse_obj(e.__dict__).dict())
-    except Exception as e:
-        logger.error(e)
-        return ORJSONResponse(
-            content=BaseResponseError(
-                description=f"Ошибка при получении списка рекламных кампаний. user_id={user_id}"
-            ).dict()
-        )
-    if not campaign:
-        return ORJSONResponse(content=BaseResponseEmpty().dict())
-
-    return ORJSONResponse(content=CampaignResponse(payload=CampaignInfo.parse_obj(campaign)).dict())

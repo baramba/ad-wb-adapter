@@ -5,9 +5,11 @@ from pydantic import ValidationError, parse_obj_as
 
 from adapters.wb.official.wbadapter import WBAdapter
 from core.settings import logger, settings
-from dto.official.stake import (
+from dto.official.advert import (
     ActualStakeDTO,
     ActualStakesDTO,
+    BalanceDTO,
+    BudgetDTO,
     CampaignDTO,
     CampaignInfoDTO,
     CampaignsDTO,
@@ -15,11 +17,10 @@ from dto.official.stake import (
     CampaignType,
     IntervalDTO,
 )
-from dto.unofficial.stake import BalanceDTO
 from exceptions.base import WBAError
 
 
-class StakeAdapter(WBAdapter):
+class AdvertAdapter(WBAdapter):
     async def actual_stakes(self, type: int, param: int) -> ActualStakesDTO:
         """Метод возвращает список актуальных ставок по ключевой фразе."""
 
@@ -28,17 +29,23 @@ class StakeAdapter(WBAdapter):
             "type": type,
             "param": param,
         }
-
+        error_desc = "Не удалось получить список актуальных ставок."
         try:
             result = await self._get(url=url, params=params)
             result.raise_for_status()
+            stakes = parse_obj_as(list[ActualStakeDTO], result.json())
+            return ActualStakesDTO(stakes=stakes)
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description="Ошибка при получении списка актуальных ставок.",
+                description=error_desc,
             ) from e
-        stakes = parse_obj_as(list[ActualStakeDTO], result.json())
-        return ActualStakesDTO(stakes=stakes)
+        except ValidationError as e:
+            error_desc = f"{error_desc}. error={e.errors()}"
+            logger.error(error_desc)
+            raise WBAError(
+                description=error_desc,
+            ) from e
 
     async def change_rate(self, advert_id: int, type: int, cpm: int, param: int) -> None:
         """Метод позволяет установить новое значние ставки на торгах.
@@ -52,8 +59,6 @@ class StakeAdapter(WBAdapter):
             cpm -- Новое значение ставки
             param -- Параметр, для которого будет внесено изменение (является значением subjectId или setId в
                      зависимости от типа РК)
-        Raises:
-            WBAError:
         """
 
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/cpm"
@@ -64,14 +69,14 @@ class StakeAdapter(WBAdapter):
             "cpm": cpm,
             "param": param,
         }
-
+        error_desc = "Не удалось установить новое значение ставки."
         try:
             result = await self._post(url=url, body=body)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description=f"Ошибка при установке нового значения ставки. body={body}. ",
+                description=f"{error_desc} body={body}. ",
             ) from e
 
     async def start_campaign(self, id: int) -> None:
@@ -80,21 +85,19 @@ class StakeAdapter(WBAdapter):
         Arguments:
             id -- идентификатор реклмной кампании.
 
-        Raises:
-            WBAError: _description_
         """
 
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/start"
 
         params = {"id": id}
-
+        error_desc = "Не удалось запустить рекламную кампанию."
         try:
             result = await self._get(url=url, params=params)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description=f"Ошибка при старте рекламной капании. wb_campaign_id={id}.",
+                description=error_desc,
             ) from e
 
     async def pause_campaign(self, id: int) -> None:
@@ -103,21 +106,19 @@ class StakeAdapter(WBAdapter):
         Arguments:
             id -- идентификатор реклмной кампании.
 
-        Raises:
-            WBAError: _description_
         """
 
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/pause"
 
         params = {"id": id}
-
+        error_desc = "Не удалось поставить рекламную кампанию на паузу."
         try:
             result = await self._get(url=url, params=params)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description=f"Ошибка при постановке на паузу рекламной капании. wb_campaign_id={id}.",
+                description=error_desc,
             ) from e
 
     async def campaigns(
@@ -152,9 +153,6 @@ class StakeAdapter(WBAdapter):
             direction -- Направление (default: {"desc"})
                         desc (от большего к меньшему)
                         asc (от меньшего к большему)
-
-        Raises:
-            WBAError:
         """
 
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/adverts"
@@ -167,6 +165,7 @@ class StakeAdapter(WBAdapter):
             "order": order,
             "direction": direction,
         }
+        error_desc = "Не удалось получить списк рекламных кампаний."
         try:
             result = await self._get(url=url, params=params)
             result.raise_for_status()
@@ -178,13 +177,13 @@ class StakeAdapter(WBAdapter):
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description="Ошибка при получении списка рекламных кампаний.",
+                description=error_desc,
             ) from e
         except ValidationError as e:
-            logger.error("Не удалось обработать данные, полученные в ответ на запрос.")
-            logger.error(f"error={e.errors()}")
+            error_desc = f"{error_desc}. error={e.errors()}"
+            logger.error(error_desc)
             raise WBAError(
-                description="Ошибка при получении списка рекламных кампаний.",
+                description=error_desc,
             ) from e
 
     async def set_time_intervals(self, wb_campaign_id: int, intervals: list[IntervalDTO], param: int) -> None:
@@ -198,8 +197,6 @@ class StakeAdapter(WBAdapter):
             param -- Параметр, для которого будет внесено изменение, должен быть значением menuId (для РК в каталоге),
                      subjectId (для РК в поиске и рекомендациях) или setId (для РК в карточке товара).
 
-        Raises:
-            WBAError: _description_
         """
 
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/intervals"
@@ -208,14 +205,14 @@ class StakeAdapter(WBAdapter):
             "intervals": [interval.dict() for interval in intervals],
             "param": param,
         }
-
+        error_desc = "Не удалось изменить интервал показа рекламной кампании."
         try:
             result = await self._post(url=url, body=body)
             result.raise_for_status()
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description="Ошибка изменения интервала показа РК.",
+                description=error_desc,
             ) from e
 
     async def campaign(self, id: int) -> CampaignInfoDTO | None:
@@ -224,9 +221,6 @@ class StakeAdapter(WBAdapter):
         Arguments:
             id -- идентификатор рекламной кампании
 
-        Raises:
-            WBAError: _description_
-
         Returns:
             Возвращает информацию о рекламной кампании или None, если она не была найдена.
         """
@@ -234,6 +228,7 @@ class StakeAdapter(WBAdapter):
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v0/advert"
 
         params = {"id": id}
+        error_desc = "Не удалось получить информацию о рекламной кампании."
         try:
             result = await self._get(url=url, params=params)
             result.raise_for_status()
@@ -244,27 +239,24 @@ class StakeAdapter(WBAdapter):
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description=f"Ошибка при получении информации о рекламной кампании. wb_campaign_id={id}.",
+                description=error_desc,
             ) from e
         except ValidationError as e:
-            logger.error("Не удалось обработать данные, полученные в ответ на запрос.")
-            logger.error(f"error={e.errors()}")
+            error_desc = f"{error_desc}. error={e.errors()}"
+            logger.error(error_desc)
             raise WBAError(
-                description=f"Ошибка при получении информации о рекламной кампании. wb_campaign_id={id}.",
+                description=error_desc,
             ) from e
 
     async def balance(self) -> BalanceDTO:
         """Метод позволяет получить информацию о балансе пользователя.
-
-        Raises:
-            WBAError: _description_
 
         Returns:
             Возвращает информацию о балансе пользователя.
         """
 
         url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v1/balance"
-
+        error_desc = "Не удалось получить информацию о балансе пользователя."
         try:
             result = await self._get(url=url)
             result.raise_for_status()
@@ -273,10 +265,38 @@ class StakeAdapter(WBAdapter):
         except HTTPStatusError as e:
             raise WBAError(
                 status_code=e.response.status_code,
-                description="Ошибка при получении информации о балансе пользователя.",
+                description=error_desc,
             ) from e
         except ValidationError as e:
-            logger.error(f"Не удалось обработать данные, полученные в ответ на запрос. error={e.errors()}")
+            error_desc = f"{error_desc}. error={e.errors()}"
+            logger.error(error_desc)
             raise WBAError(
-                description="Ошибка при получении информации о балансе пользователя.",
+                description=error_desc,
+            ) from e
+
+    async def budget(self, wb_campaign_id: int) -> BudgetDTO:
+        """Метод позволяет получить информацию о бюджете рекламной кампании.
+
+        Returns:
+            Возвращает текущий размер бюджета рекламной кампании.
+        """
+
+        url = f"{settings.WBADAPTER.WB_OFFICIAL_API_ADV_URL}/v1/budget"
+        params = {"id": wb_campaign_id}
+        error_desc = "Не удалось получить информацию о бюджете рекламной кампании."
+        try:
+            result = await self._get(url=url, params=params)
+            result.raise_for_status()
+            data = result.json()
+            return BudgetDTO.parse_obj(data)
+        except HTTPStatusError as e:
+            raise WBAError(
+                status_code=e.response.status_code,
+                description=error_desc,
+            ) from e
+        except ValidationError as e:
+            error_desc = f"{error_desc}. error={e.errors()}"
+            logger.error(error_desc)
+            raise WBAError(
+                description=error_desc,
             ) from e

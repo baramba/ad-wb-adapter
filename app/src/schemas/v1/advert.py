@@ -3,7 +3,7 @@ from enum import IntEnum, auto
 
 from pydantic import Field
 
-from dto.official.stake import CampaignInterval, CampaignStatus, CampaignType, IntervalDTO
+from dto.official.advert import CampaignInterval, CampaignStatus, CampaignType, IntervalDTO
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import BaseResponseSuccess
 
@@ -117,6 +117,14 @@ class Campaigns(BaseOrjsonModel):
 
 class CampaignsResponse(BaseResponseSuccess):
     payload: Campaigns | None
+
+
+class CampaignBudget(BaseOrjsonModel):
+    budget: int
+
+
+class CampaignBudgetResponse(BaseResponseSuccess):
+    payload: CampaignBudget | None
 
 
 class CampaignResponse(BaseResponseSuccess):

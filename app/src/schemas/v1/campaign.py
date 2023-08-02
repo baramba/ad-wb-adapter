@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from pydantic import Field
+
 from schemas.common import BaseOrjsonModel
 from schemas.v1.base import BaseResponseSuccess
 
@@ -10,7 +12,7 @@ class CreateCampaignResponse(BaseOrjsonModel):
 
 
 class Budget(BaseOrjsonModel):
-    amount: int
+    budget: int = Field(description="Текущий бюджет рекламной кампании")
 
 
 class ReplenishBugetResponse(BaseResponseSuccess):

@@ -1,7 +1,7 @@
 from enum import Enum, IntEnum
 from uuid import UUID
 
-from dto.official.stake import CampaignType
+from dto.official.advert import CampaignType
 from schemas.common import BaseOrjsonModel
 
 

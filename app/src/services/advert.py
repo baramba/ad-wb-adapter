@@ -3,45 +3,43 @@ import uuid
 from fastapi import Depends
 
 from adapters.token import TokenManager
-from adapters.wb.official.stake import StakeAdapter
+from adapters.wb.official.advert import AdvertAdapter
+from adapters.wb.unofficial.advert import AdvertAdapterUnofficial
 from adapters.wb.unofficial.campaign import CampaignAdapterUnofficial
-from adapters.wb.unofficial.stake import StakeAdapterUnofficial
 from core.settings import logger
-from core.utils.context import AppContext
-from depends.adapters.official.stake import get_stake_adapter
+from depends.adapters.official.advert import get_advert_adapter
 from depends.adapters.token import get_token_manager
+from depends.adapters.unofficial.advert import get_stake_adapter_unofficial
 from depends.adapters.unofficial.campaign import get_campaign_adapter_unofficial
-from depends.adapters.unofficial.stake import get_stake_adapter_unofficial
-from dto.official.stake import CampaignInfoDTO, CampaignsDTO, CampaignStatus, CampaignType, IntervalDTO
-from dto.token import OfficialUserAuthDataDTO
-from dto.unofficial.stake import ActualStakesDTO, BalanceDTO, OrganicsDTO, ProductsDTO
+from dto.official.advert import IntervalDTO
+from dto.unofficial.advert import ActualStakesDTO, OrganicsDTO, ProductsDTO
 
 
-class StakeService:
+class AdvertService:
     def __init__(
         self,
-        stake_adapter_unofficial: StakeAdapterUnofficial,
+        advert_adapter_unofficial: AdvertAdapterUnofficial,
         campaign_adapter_unofficial: CampaignAdapterUnofficial,
-        stake_adapter: StakeAdapter,
+        advert_adapter: AdvertAdapter,
         token_manager: TokenManager,
     ) -> None:
-        self.stake_adapter = stake_adapter
+        self.stake_adapter = advert_adapter
         self.campaign_adapter_unofficial = campaign_adapter_unofficial
-        self.stake_adapter_unofficial = stake_adapter_unofficial
+        self.advert_adapter_unofficial = advert_adapter_unofficial
         self.token_manager = token_manager
 
     async def actual_stakes(
         self,
         keyword: str,
     ) -> ActualStakesDTO:
-        return await self.stake_adapter_unofficial.actual_stakes(keyword=keyword)
+        return await self.advert_adapter_unofficial.actual_stakes(keyword=keyword)
 
     async def products_by_region(
         self,
         dest: str,
         nm: str,
     ) -> ProductsDTO:
-        return await self.stake_adapter_unofficial.products_by_region(dest=dest, nm=nm)
+        return await self.advert_adapter_unofficial.products_by_region(dest=dest, nm=nm)
 
     async def organic_by_region(
         self,
@@ -49,7 +47,7 @@ class StakeService:
         query: str,
         resultset: str,
     ) -> OrganicsDTO:
-        return await self.stake_adapter_unofficial.organic_by_region(dest=dest, query=query, resultset=resultset)
+        return await self.advert_adapter_unofficial.organic_by_region(dest=dest, query=query, resultset=resultset)
 
     async def set_new_rate(
         self,
@@ -93,21 +91,6 @@ class StakeService:
         self.stake_adapter.auth_data = auth_data
         await self.stake_adapter.start_campaign(id=wb_campaign_id)
 
-    async def campaigns(
-        self,
-        type: CampaignType | None,
-        status: CampaignStatus | None,
-        limit: int | None = None,
-    ) -> CampaignsDTO | None:
-        auth_data = await self.token_manager.auth_data_by_user_id_official(AppContext.user_id())
-        self.stake_adapter.auth_data = auth_data
-        return await self.stake_adapter.campaigns(type=type, status=status, limit=limit)
-
-    async def campaign(self, user_id: uuid.UUID, campaign_id: int) -> CampaignInfoDTO | None:
-        auth_data = await self.token_manager.auth_data_by_user_id_official(user_id)
-        self.stake_adapter.auth_data = auth_data
-        return await self.stake_adapter.campaign(id=campaign_id)
-
     async def set_time_intervals(
         self,
         user_id: uuid.UUID,
@@ -131,21 +114,16 @@ class StakeService:
 
         await self.stake_adapter.set_time_intervals(wb_campaign_id=wb_campaign_id, intervals=intervals, param=param)
 
-    async def balance(self) -> BalanceDTO:
-        auth_data = await self.token_manager.auth_data_by_user_id_unofficial(AppContext.user_id())
-        self.stake_adapter.auth_data = OfficialUserAuthDataDTO(wb_token_ad=auth_data.wb_token_ad)
-        return await self.stake_adapter.balance()
-
 
 async def get_stake_service(
-    stake_adapter_unofficial: StakeAdapterUnofficial = Depends(get_stake_adapter_unofficial),
+    stake_adapter_unofficial: AdvertAdapterUnofficial = Depends(get_stake_adapter_unofficial),
     campaign_adapter_unofficial: CampaignAdapterUnofficial = Depends(get_campaign_adapter_unofficial),
-    stake_adapter: StakeAdapter = Depends(get_stake_adapter),
+    stake_adapter: AdvertAdapter = Depends(get_advert_adapter),
     token_manager: TokenManager = Depends(get_token_manager),
-) -> StakeService:
-    return StakeService(
-        stake_adapter_unofficial=stake_adapter_unofficial,
-        stake_adapter=stake_adapter,
+) -> AdvertService:
+    return AdvertService(
+        advert_adapter_unofficial=stake_adapter_unofficial,
+        advert_adapter=stake_adapter,
         campaign_adapter_unofficial=campaign_adapter_unofficial,
         token_manager=token_manager,
     )

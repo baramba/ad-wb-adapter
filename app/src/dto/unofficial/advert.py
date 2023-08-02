@@ -41,12 +41,3 @@ class OrganicDTO(BaseOrjsonModel):
 
 class OrganicsDTO(BaseOrjsonModel):
     products: list[OrganicDTO] | None
-
-
-class BalanceDTO(BaseOrjsonModel):
-    # Счёт, рублей
-    balance: int
-    # Баланс, рублей
-    net: int
-    # Бонусы, рублей
-    bonus: int | None

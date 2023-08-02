@@ -98,3 +98,21 @@ class IntervalDTO(BaseOrjsonModel):
 
 class IntervalsDTO(BaseOrjsonModel):
     intervals: list[IntervalDTO]
+
+
+class BudgetDTO(BaseOrjsonModel):
+    # Поле не используется. Значение всегда 0.
+    cash: int
+    # Поле не используется. Значение всегда 0.
+    netting: int
+    # Бюджет рекламной кампании, ₽
+    total: int
+
+
+class BalanceDTO(BaseOrjsonModel):
+    # Счёт, рублей
+    balance: int
+    # Баланс, рублей
+    net: int
+    # Бонусы, рублей
+    bonus: int | None

@@ -7,12 +7,12 @@ from pydantic import ValidationError
 from adapters.wb.unofficial.wbadapter import WBAdapterUnofficial
 from adapters.wb.utils import error_for_raise
 from core.settings import logger
-from dto.unofficial.stake import ActualStakesDTO, OrganicsDTO, ProductsDTO
+from dto.unofficial.advert import ActualStakesDTO, OrganicsDTO, ProductsDTO
 from exceptions.base import WBAError
 from schemas.v1.base import ResponseCode
 
 
-class StakeAdapterUnofficial(WBAdapterUnofficial):
+class AdvertAdapterUnofficial(WBAdapterUnofficial):
     async def actual_stakes(self, keyword: str) -> ActualStakesDTO:
         """Метод возвращает список актуальных ставок по ключевой фразе."""
 
