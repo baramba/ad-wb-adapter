@@ -1,5 +1,8 @@
 import uuid
 
+from httpx import ConnectError
+from pydantic import ValidationError
+
 from adapters.gen.token.token.client import Client
 from adapters.gen.token.token.client.api.auth_data import (
     get_auth_data_v1_auth_data_get,
@@ -10,8 +13,6 @@ from adapters.gen.token.token.client.models.http_validation_error import HTTPVal
 from core.settings import logger, settings
 from dto.token import OfficialUserAuthDataDTO, UnofficialUserAuthDataDTO, UserAuthDataBase
 from exceptions.base import WBAError
-from httpx import ConnectError
-from pydantic import ValidationError
 
 
 class TokenManager:
@@ -35,6 +36,9 @@ class TokenManager:
 
         except ConnectError as e:
             logger.error(f"Could not connect to token manager ({self.url}). error: {e}")
+            raise WBAError(
+                description=f"Could not connect to token manager. user_id={user_id}",
+            ) from e
 
         if isinstance(auth_data, HTTPValidationError):
             logger.error(
