@@ -55,10 +55,19 @@ exclude = '''
 '''
 
 [tool.isort]
-# profile = "black"
+profile = "black"
 py_version=311
 line_length=120
 skip = [
 '.eggs', '.git', '.hg', '.mypy_cache', '.nox', '.pants.d', '.tox',
 '.venv', '_build', 'buck-out', 'build', 'dist', 'node_modules', 'venv',
 ]
+
+[tool.pyright]
+include = ["src"]
+exclude = [
+"**/__pycache__",
+]
+
+pythonVersion = "3.11"
+pythonPlatform = "Linux"

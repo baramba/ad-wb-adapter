@@ -20,7 +20,11 @@ router = APIRouter(prefix="/product", tags=["product"])
         status.HTTP_200_OK: {"model": ProductSubjectResponse},
     },
     summary="Метод для получения списка продуктовых карточек.",
-    description="Метод позволяет получить список продуктовых карточек пользователя WB.",
+    description="""
+Метод позволяет получить список продуктовых карточек пользователя.
+[https://cmp.wildberries.ru/backend/api/v2/search/products]\
+(https://cmp.wildberries.ru/backend/api/v2/search/products)
+""",
 )
 async def products(
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
@@ -48,7 +52,11 @@ async def products(
         status.HTTP_200_OK: {"model": CategoryResponse},
     },
     summary="Метод для получения списка категорий.",
-    description="Метод позволяет получить список категорий пользователя WB.",
+    description="""
+Метод позволяет получить список категорий пользователя WB.
+[https://cmp.wildberries.ru/backend/api/v2/search/supplier-subjects]\
+(https://cmp.wildberries.ru/backend/api/v2/search/supplier-subjects)
+""",
 )
 async def categories(
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],

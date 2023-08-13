@@ -16,11 +16,11 @@ router = APIRouter(prefix="/suppliers", tags=["supplier"])
 
 @router.post(
     path="/token",
-    description="Обменивает refresh wb_token на access wb_token.",
-    summary="Возвращает access wb_token пользователя.",
     responses={
         status.HTTP_200_OK: {"model": WBTokenResponse},
     },
+    summary="Возвращает access wb_token пользователя.",
+    description="Обменивает refresh wb_token на access wb_token.",
 )
 async def auth_wb_user(
     body: WBTokenRequest,
@@ -43,11 +43,14 @@ async def auth_wb_user(
 
 @router.post(
     path="/balance",
-    description="Метод для получения баланса пользователя.",
-    summary="Возвращает баланс пользователя.",
     responses={
         status.HTTP_200_OK: {"model": BalanceResponse},
     },
+    summary="Возвращает баланс пользователя.",
+    description="""Метод для получения баланса пользователя.",
+[https://advert-api.wb.ru/adv/v1/balance]\
+(https://advert-api.wb.ru/adv/v1/balance)
+""",
 )
 async def balance(
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],

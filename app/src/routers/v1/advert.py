@@ -65,7 +65,10 @@ async def actual_stakes(
         status.HTTP_200_OK: {"model": ProductResponse},
     },
     summary="Метод для получения информации о продуктах в регионе.",
-    description="Метод позволяет получить информацию о продуктах в регионе.",
+    description="""Метод позволяет получить информацию о продуктах в регионе.",
+[https://card.wb.ru/cards/list]\
+(https://card.wb.ru/cards/list)
+""",
 )
 async def products_by_region(
     dest: str,
@@ -134,7 +137,10 @@ async def organic_by_region(
         status.HTTP_200_OK: {"model": BaseResponseSuccess},
     },
     summary="Метод для установки нового значения ставки.",
-    description="Метод позволяет установить новое значение ставки на торгах.",
+    description="""Метод позволяет установить новое значение ставки на торгах.",
+[https://advert-api.wb.ru/adv/v0/cpm]\
+(https://advert-api.wb.ru/adv/v0/cpm)
+""",
 )
 async def set_new_rate(
     wb_campaign_id: int,
@@ -174,7 +180,10 @@ async def set_new_rate(
         status.HTTP_200_OK: {"model": BaseResponseSuccess},
     },
     summary="Метод для постановки кампании на паузу.",
-    description="Метод позволяет поставить кампанию на паузу.",
+    description="""Метод позволяет поставить кампанию на паузу.",
+[https://advert-api.wb.ru/adv/v0/pause]\
+(https://advert-api.wb.ru/adv/v0/pause)
+""",
 )
 async def pause_campaign(
     wb_campaign_id: int,
@@ -203,7 +212,10 @@ async def pause_campaign(
         status.HTTP_200_OK: {"model": BaseResponseSuccess},
     },
     summary="Метод для возобновления работы рекламной кампании.",
-    description="Метод позволяет возобновить работу рекламной кампании.",
+    description="""Метод позволяет возобновить работу рекламной кампании.",
+[https://advert-api.wb.ru/adv/v0/start]\
+(https://advert-api.wb.ru/adv/v0/start)
+""",
 )
 async def resume_campaign(
     wb_campaign_id: int,
@@ -234,7 +246,10 @@ async def resume_campaign(
         status.HTTP_200_OK: {"model": BaseResponseSuccess},
     },
     summary="Метод для изменения временных интервалов для показа рекламных кампаний.",
-    description="Метод позволяет установить список временных интервалов для рекламной кампании.",
+    description="""Метод позволяет установить список временных интервалов для рекламной кампании.",
+[https://advert-api.wb.ru/adv/v0/intervals]\
+(https://advert-api.wb.ru/adv/v0/intervals)
+""",
 )
 async def intervals(
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],

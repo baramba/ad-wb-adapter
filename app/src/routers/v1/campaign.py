@@ -34,8 +34,8 @@ router = APIRouter(prefix="/campaigns", tags=["campaigns"])
         status.HTTP_202_ACCEPTED: {"model": RequestQueuedResponse},
         status.HTTP_201_CREATED: {"model": JobResult[CreateCampaignResponse]},
     },
-    description="Создает и запускает рекламную кампанию на стороне wildberries.",
     summary="Возвращает 200 в случае успешного создания задачи.",
+    description="Создает и запускает рекламную кампанию на стороне wildberries.",
 )
 async def create_full_campaign(
     campaign: CampaignCreateDTO,
@@ -125,7 +125,10 @@ async def campaign(
         status.HTTP_200_OK: {"model": CampaignsResponse},
     },
     summary="Метод для получения списка рекламных кампаний пользователя.",
-    description="Метод позволяет позволяет получить список рекламных кампаний.",
+    description="""Метод позволяет позволяет получить список рекламных кампаний.",
+[https://advert-api.wb.ru/adv/v0/adverts]\
+(https://advert-api.wb.ru/adv/v0/adverts)
+""",
 )
 async def campaigns(
     user_id: Annotated[uuid.UUID, Depends(x_user_id)],
