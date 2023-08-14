@@ -37,12 +37,14 @@ class CampaignStatus(IntEnum):
     Values:
         4 - готова к запуску,
         7 - РК завершена,
+        8 - отказался,
         9 - идут показы,
         11 - РК на паузе.
     """
 
     READY_START = 4
     FINISHED = 7
+    REFUSED = 8
     ACTIVE = 9
     PAUSED = 11
 
