@@ -18,6 +18,7 @@ app = FastAPI(
     description=metadata.description,
     root_path=settings.CONTEXT,
 )
+app.openapi_version = "3.0.0"
 app.add_middleware(
     CorrelationIdMiddleware,
     header_name="X-Request-Id",
